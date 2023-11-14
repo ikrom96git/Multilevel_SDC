@@ -43,10 +43,11 @@ class HarmonicOscillator:
                 )
                 return np.array([x, v]), np.array([derx, derv])
             elif D == 0:
+                print(D)
                 x = exp
                 v = t * exp
                 derx = exp * (-self.prob_params.k / 2)
-                derv = exp * (-self.prob_params.k / 2 + t)
+                derv = exp * (-self.prob_params.k / 2 * t + 1)
                 return np.array([x, v]), np.array([derx, derv])
             else:
                 omega = np.sqrt(D)
@@ -65,10 +66,12 @@ class HarmonicOscillator:
     def compute_const(self, x0, v0, t0):
         x, v = self.solution_form(t0)
         u0 = np.array([x0, v0])
-        A = np.array([[x[0], v[0]], [x[1], v[1]]])
+        A = np.array([[x[0], x[1]], [v[0], v[1]]])
         return np.linalg.solve(A, u0)
 
     def compute_solution(self, x0, v0, t0, t):
         c = self.compute_const(x0, v0, t0)
         x, v = self.solution_form(t)
-        return c[0] * x + c[1] * v
+        x_sol = c @ x
+        v_sol = c @ v
+        return np.block([[x_sol], [v_sol]])
