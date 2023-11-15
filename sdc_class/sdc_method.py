@@ -14,8 +14,8 @@ class SDC_method(HarmonicOscillator):
         self.coll = MatrixSDC(
             self.collocation_params.num_nodes, self.collocation_params.quad_type
         )
+        self.residual = []
 
-        self.residual = dict()
         self.name = "SDC"
 
     def get_residual(self, U0, U):
@@ -60,9 +60,9 @@ class SDC_method(HarmonicOscillator):
             raise ValueError("Unknown initial guess type")
         return U
 
-    def get_initial_condition(self, X, V):
+    def get_initial_condition(self, U):
         # Get the initial condition for the problem
-        return np.block([X, V])
+        return U
 
     def get_f(self):
         # Get the function f for the problem
@@ -73,8 +73,16 @@ class SDC_method(HarmonicOscillator):
         F = np.block([Fx, Fv])
         return F
 
-    def sdc_method(self, U0, U):
+    def eval_f(self, U):
+        F = np.block([[self.get_f()], [self.get_f()]])
+        return F @ U
+
+    def sdc_method(self, U0=None, U=None, tau=[None, None]):
         # Run the SDC method
+        if U0 is None:
+            U0 = self.get_initial_guess(type="spread")
+        if U is None:
+            U = self.get_initial_guess()
         F = np.block([[self.get_f()], [self.get_f()]])
         O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
         I = np.eye(self.coll.num_nodes + 1)
@@ -83,11 +91,16 @@ class SDC_method(HarmonicOscillator):
         bQ = np.block([[QQ, O], [O, Q]])
         b0 = np.block([[I, self.dt * self.coll.Qmat], [O, I]])
         b = bQ @ F @ U + b0 @ U0
+
+        if None not in tau:
+            b += tau
+
         AQ = np.block([[self.dt**2 * self.coll.Qx, O], [O, self.dt * self.coll.QT]])
         func = lambda Z: b + AQ @ F @ Z - Z
         U = fsolve(func, U)
         A = np.eye(2 * (self.coll.num_nodes + 1)) - AQ @ F
         UL = np.linalg.solve(A, b)
+        self.residual.append(self.get_residual(U0, U))
         return U
 
     def run_sdc(self):
@@ -97,8 +110,14 @@ class SDC_method(HarmonicOscillator):
         U = self.get_initial_guess()
         for i in range(self.prob_params.Kiter):
             U = self.sdc_method(U0, U)
-            self.residual[i] = self.get_residual(U0, U)
         return U
+
+    def get_Qmat(self):
+        O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
+        QQ = self.dt**2 * (self.coll.QQ)
+        Q = self.dt * (self.coll.Qmat)
+        A = np.block([[QQ, O], [O, Q]])
+        return A
 
     def collocation_solution(self):
         # Get the collocation solution
