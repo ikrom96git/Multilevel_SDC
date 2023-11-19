@@ -13,6 +13,8 @@ if __name__ == "__main__":
     prob_params["initial_guess"] = "spread"
     prob_params["u0"] = np.array([2, 1])
     prob_params["Kiter"] = 5
+    prob_params["f0"] = 1.0
+    prob_params["omega"] = 1.0
     collocation_params = dict()
     collocation_params["num_nodes"] = 3
     collocation_params["quad_type"] = "GAUSS"
