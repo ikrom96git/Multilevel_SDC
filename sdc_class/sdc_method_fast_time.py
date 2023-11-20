@@ -1,17 +1,16 @@
 import numpy as np
-from problem_class.harmonicoscillator import HarmonicOscillator
 from transfer_class.matrix_sdc import MatrixSDC
 from problem_class.Pars import _Pars
 from scipy.optimize import fsolve
 from problem_class.reduced_HO import Reduced_HO
-
+from problem_class.asymptotic_problem import Fast_time
 
 # Define SDC class
-class SDC_method(Reduced_HO):
+class SDC_method_fast_time(Fast_time):
     def __init__(self, problem_params, collocation_params):
         self.collocation_params = _Pars(collocation_params)
         super().__init__(problem_params)
-        self.dt = self.prob_params.dt
+        self.dt = self.prob_params.dt/np.sqrt(self.prob_params.eps)
         self.coll = MatrixSDC(
             self.collocation_params.num_nodes, self.collocation_params.quad_type
         )
@@ -71,8 +70,8 @@ class SDC_method(Reduced_HO):
         O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
         nodes = np.append(0, self.coll.nodes)
         D = np.diag(nodes)
-        Fx = self.build_f(I, O, D)
-        Fv = self.build_f(O, I, D)
+        Fx = self.build_f(I, O, O)
+        Fv = self.build_f(O, I, I)
         F = np.block([Fx, Fv])
         return F
 
@@ -94,7 +93,7 @@ class SDC_method(Reduced_HO):
         bQ = np.block([[QQ, O], [O, Q]])
         b0 = np.block([[I, self.dt * self.coll.Qmat], [O, I]])
         b = bQ @ F @ U + b0 @ U0
-        
+
         if None not in tau:
             b += tau
 
@@ -102,13 +101,13 @@ class SDC_method(Reduced_HO):
         func = lambda Z: b + AQ @ F @ Z - Z
         U = fsolve(func, U)
         A = np.eye(2 * (self.coll.num_nodes + 1)) - AQ @ F
-        UL = np.linalg.solve(A, b)
         self.residual.append(self.get_residual(U0, U))
         return U
 
     def run_sdc(self):
         # Run the SDC method
         U0 = self.get_initial_guess(type="spread")
+
         U = self.get_initial_guess()
         for i in range(self.prob_params.Kiter):
             U = self.sdc_method(U0, U)

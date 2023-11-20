@@ -130,7 +130,7 @@ class HarmonicOscillator:
         return np.block([[x_sol], [v_sol]])
 
 
-class OscillatorProblem(HarmonicOscillator):
+class OscillatorProblem_old(HarmonicOscillator):
     def __init__(self, prob_params):
         super().__init__(prob_params)
         self.mu = self.prob_params.omega**2 / self.prob_params.c

@@ -33,6 +33,7 @@ def sort_data(data, Kiter):
 
 
 def run_plot(residual, Kiter, label, title="Plot", value="pos", save_name=None):
+    print(residual)
     res = []
     x_axis = []
     if len(residual) != len(Kiter):
