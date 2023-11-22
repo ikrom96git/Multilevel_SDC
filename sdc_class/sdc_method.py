@@ -4,7 +4,7 @@ from transfer_class.matrix_sdc import MatrixSDC
 from problem_class.Pars import _Pars
 from scipy.optimize import fsolve
 from problem_class.reduced_HO import Reduced_HO
-
+from copy import deepcopy
 
 # Define SDC class
 class SDC_method(Reduced_HO):
@@ -79,6 +79,38 @@ class SDC_method(Reduced_HO):
     def eval_f(self, U):
         F = np.block([[self.get_f()], [self.get_f()]])
         return F @ U
+    
+    def sdc_node_node(self, U=None, tau=[None, None]):
+        if U is None:
+            U = self.get_initial_guess()
+
+        X, V = np.split(U, 2)
+        Xnew=deepcopy(X)
+        Vnew=deepcopy(V)
+        intpos=[]
+        intvel=[]
+        for m in range(self.coll.num_nodes):
+            Sq=0
+            S=0
+            for j in range(self.coll.num_nodes+1):
+                Sq+=self.dt**2*(self.coll.SQ[m+1,j]-self.coll.Sx[m+1, j])*self.build_f(X[j], V[j], self.dt*self.coll.nodes[j-1])
+                S+=self.dt*(self.coll.S[m+1,j]-self.coll.ST[m+1, j])*self.build_f(X[j], V[j], self.dt*self.coll.nodes[j-1])
+            intpos.append(Sq)
+            intvel.append(S)
+    
+        for m in range(self.coll.num_nodes):
+            tmppos=intpos[m]     
+            tmpvel=intvel[m]+Vnew[m]
+            for j in range(m+1):
+                tmppos+=self.dt**2*(self.coll.Sx[m+1,j]*self.build_f(Xnew[j], Vnew[j], self.dt*self.coll.nodes[j]))
+            Xnew[m+1]=tmppos+Xnew[m]+self.dt*self.coll.delta_m[m]*V[0]
+            func=lambda v: 0.5*self.dt*self.coll.delta_m[m]*self.build_f(Xnew[m+1], v, self.dt*self.coll.nodes[m])+0.5*self.dt*self.coll.delta_m[m]*self.build_f(Xnew[m], Vnew[m], self.dt*self.coll.nodes[m])
+            Vnew[m+1]=fsolve(func, Vnew[m])
+        Unew=np.block([Xnew, Vnew])
+        return Unew
+
+
+
 
     def sdc_method(self, U0=None, U=None, tau=[None, None]):
         # Run the SDC method
@@ -86,6 +118,15 @@ class SDC_method(Reduced_HO):
             U0 = self.get_initial_guess(type="spread")
         if U is None:
             U = self.get_initial_guess()
+
+        X, V = np.split(U, 2)
+        X0, V0 = np.split(U0, 2)
+        T=np.append(0, self.coll.nodes)
+        for m in range(self.coll.num_nodes):
+            for j in range(self.coll.num_nodes + 1):
+                
+                X0[j] = X0[j] + self.dt * V0[j]
+                V0[j] = V0[j] - self.dt * X0[j]
         F = np.block([[self.get_f()], [self.get_f()]])
         O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
         I = np.eye(self.coll.num_nodes + 1)
@@ -112,6 +153,8 @@ class SDC_method(Reduced_HO):
         U = self.get_initial_guess()
         for i in range(self.prob_params.Kiter):
             U = self.sdc_method(U0, U)
+            Usol=self.sdc_node_node(U)
+            breakpoint()
         return U
 
     def get_Qmat(self):
