@@ -19,21 +19,18 @@ class SDC_method(Reduced_HO):
 
         self.name = "SDC"
 
+
     def get_residual(self, U0, U):
         # Get the residual of the problem
-
-        F = np.block([[self.get_f()], [self.get_f()]])
-        O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
-
-        I = np.eye(self.coll.num_nodes + 1)
-        b0 = np.block([[I, self.dt * self.coll.Qmat], [O, I]])
-        QQ = self.dt**2 * (self.coll.QQ)
-        Q = self.dt * (self.coll.Qmat)
-        A = np.block([[QQ, O], [O, Q]])
-        R = U - (A @ F @ U + b0 @ U0)
+        X, V = np.split(U, 2)
+        X0, V0 = np.split(U0, 2)
+        T = np.append(0, self.dt * self.coll.nodes)
+        F=self.build_f(X, V, T)
+        Rx=X0+self.dt*self.coll.Qmat@V0+self.dt**2*self.coll.QQ@F-X
+        Rv=V0+self.dt*self.coll.Qmat@F-V
+        R=np.block([Rx, Rv])
         Rabs = np.abs(R)
         return Rabs
-
     def get_initial_guess(self, type=None):
         if type is None:
             type = self.prob_params.initial_guess
@@ -80,34 +77,25 @@ class SDC_method(Reduced_HO):
         F = np.block([[self.get_f()], [self.get_f()]])
         return F @ U
     
-    def sdc_node_node(self, U=None, tau=[None, None]):
+    def sdc_node_node(self, U0=None, U=None, tau=[None, None]):
         if U is None:
             U = self.get_initial_guess()
-
+        if U0 is None:
+            U0 = self.get_initial_guess(type="spread")
         X, V = np.split(U, 2)
         Xnew=deepcopy(X)
         Vnew=deepcopy(V)
-        intpos=[]
-        intvel=[]
+        T=np.append(0, self.dt*self.coll.nodes)
+        Sq=self.dt**2*(self.coll.SQ-self.coll.Sx)@self.build_f(X, V, self.dt*T)
+        S=self.dt*(self.coll.S-self.coll.ST)@self.build_f(X, V, self.dt*T)
         for m in range(self.coll.num_nodes):
-            Sq=0
-            S=0
-            for j in range(self.coll.num_nodes+1):
-                Sq+=self.dt**2*(self.coll.SQ[m+1,j]-self.coll.Sx[m+1, j])*self.build_f(X[j], V[j], self.dt*self.coll.nodes[j-1])
-                S+=self.dt*(self.coll.S[m+1,j]-self.coll.ST[m+1, j])*self.build_f(X[j], V[j], self.dt*self.coll.nodes[j-1])
-            intpos.append(Sq)
-            intvel.append(S)
-    
-        for m in range(self.coll.num_nodes):
-            tmppos=intpos[m]     
-            tmpvel=intvel[m]+Vnew[m]
-            for j in range(m+1):
-                tmppos+=self.dt**2*(self.coll.Sx[m+1,j]*self.build_f(Xnew[j], Vnew[j], self.dt*self.coll.nodes[j]))
-            Xnew[m+1]=tmppos+Xnew[m]+self.dt*self.coll.delta_m[m]*V[0]
-            func=lambda v: 0.5*self.dt*self.coll.delta_m[m]*self.build_f(Xnew[m+1], v, self.dt*self.coll.nodes[m])+0.5*self.dt*self.coll.delta_m[m]*self.build_f(Xnew[m], Vnew[m], self.dt*self.coll.nodes[m])
-            Vnew[m+1]=fsolve(func, Vnew[m])
+            Sx=self.dt**2*(self.coll.Sx@self.build_f(Xnew, Vnew, T)) 
+            Xnew[m+1]=Xnew[m]+self.dt*self.coll.delta_m[m]*Vnew[0]+Sq[m+1]+Sx[m+1] 
+            function=lambda z:Vnew[m]+0.5*self.dt*self.coll.delta_m[m]*(self.build_f(Xnew[m+1], z, T[m+1])+self.build_f(Xnew[m], Vnew[m], T[m]))+S[m+1]-z
+            Vnew[m+1]=fsolve(function, Vnew[m])
         Unew=np.block([Xnew, Vnew])
-        return Unew
+        self.residual.append(self.get_residual(U0, U))
+        return Unew 
 
 
 
@@ -118,15 +106,7 @@ class SDC_method(Reduced_HO):
             U0 = self.get_initial_guess(type="spread")
         if U is None:
             U = self.get_initial_guess()
-
-        X, V = np.split(U, 2)
-        X0, V0 = np.split(U0, 2)
         T=np.append(0, self.coll.nodes)
-        for m in range(self.coll.num_nodes):
-            for j in range(self.coll.num_nodes + 1):
-                
-                X0[j] = X0[j] + self.dt * V0[j]
-                V0[j] = V0[j] - self.dt * X0[j]
         F = np.block([[self.get_f()], [self.get_f()]])
         O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
         I = np.eye(self.coll.num_nodes + 1)
@@ -135,7 +115,6 @@ class SDC_method(Reduced_HO):
         bQ = np.block([[QQ, O], [O, Q]])
         b0 = np.block([[I, self.dt * self.coll.Qmat], [O, I]])
         b = bQ @ F @ U + b0 @ U0
-        
         if None not in tau:
             b += tau
 
@@ -149,12 +128,11 @@ class SDC_method(Reduced_HO):
 
     def run_sdc(self):
         # Run the SDC method
-        U0 = self.get_initial_guess(type="spread")
-        U = self.get_initial_guess()
+        U0 =deepcopy( self.get_initial_guess(type="spread"))
+        U = deepcopy(self.get_initial_guess())
         for i in range(self.prob_params.Kiter):
-            U = self.sdc_method(U0, U)
-            Usol=self.sdc_node_node(U)
-            breakpoint()
+            #U1 = self.sdc_method(U0, U)
+            U=self.sdc_node_node(U0, U)
         return U
 
     def get_Qmat(self):

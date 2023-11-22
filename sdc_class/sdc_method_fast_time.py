@@ -4,7 +4,7 @@ from problem_class.Pars import _Pars
 from scipy.optimize import fsolve
 from problem_class.reduced_HO import Reduced_HO
 from problem_class.asymptotic_problem import Fast_time
-
+from copy import deepcopy
 # Define SDC class
 class SDC_method_fast_time(Fast_time):
     def __init__(self, problem_params, collocation_params):
@@ -20,16 +20,13 @@ class SDC_method_fast_time(Fast_time):
 
     def get_residual(self, U0, U):
         # Get the residual of the problem
-
-        F = np.block([[self.get_f()], [self.get_f()]])
-        O = np.zeros([self.coll.num_nodes + 1, self.coll.num_nodes + 1])
-
-        I = np.eye(self.coll.num_nodes + 1)
-        b0 = np.block([[I, self.dt * self.coll.Qmat], [O, I]])
-        QQ = self.dt**2 * (self.coll.QQ)
-        Q = self.dt * (self.coll.Qmat)
-        A = np.block([[QQ, O], [O, Q]])
-        R = U - (A @ F @ U + b0 @ U0)
+        X, V = np.split(U, 2)
+        X0, V0 = np.split(U0, 2)
+        T = np.append(0, self.dt * self.coll.nodes)
+        F=self.build_f(X, V, T)
+        Rx=X0+self.dt*self.coll.Qmat@V0+self.dt**2*self.coll.QQ@F-X
+        Rv=V0+self.dt*self.coll.Qmat@F-V
+        R=np.block([Rx, Rv])
         Rabs = np.abs(R)
         return Rabs
 
@@ -79,6 +76,28 @@ class SDC_method_fast_time(Fast_time):
         F = np.block([[self.get_f()], [self.get_f()]])
         return F @ U
 
+    
+    def sdc_node_node(self,U0=None,  U=None, tau=[None, None]):
+        if U is None:
+            U = self.get_initial_guess()
+        if U0 is None:
+            U0 = self.get_initial_guess(type="spread")
+        X, V = np.split(U, 2)
+        Xnew=deepcopy(X)
+        Vnew=deepcopy(V)
+        T=np.append(0, self.dt*self.coll.nodes)
+        Sq=self.dt**2*(self.coll.SQ-self.coll.Sx)@self.build_f(X, V, self.dt*T)
+        S=self.dt*(self.coll.S-self.coll.ST)@self.build_f(X, V, self.dt*T)
+        for m in range(self.coll.num_nodes):
+            Sx=self.dt**2*(self.coll.Sx@self.build_f(Xnew, Vnew, T)) 
+            Xnew[m+1]=Xnew[m]+self.dt*self.coll.delta_m[m]*Vnew[0]+Sq[m+1]+Sx[m+1] 
+            function=lambda z:Vnew[m]+0.5*self.dt*self.coll.delta_m[m]*(self.build_f(Xnew[m+1], z, T[m+1])+self.build_f(Xnew[m], Vnew[m], T[m]))+S[m+1]-z
+            Vnew[m+1]=fsolve(function, Vnew[m])
+        Unew=np.block([Xnew, Vnew])
+        self.residual.append(self.get_residual(U0, Unew))
+        return Unew 
+
+
     def sdc_method(self, U0=None, U=None, tau=[None, None]):
         # Run the SDC method
         if U0 is None:
@@ -110,7 +129,7 @@ class SDC_method_fast_time(Fast_time):
 
         U = self.get_initial_guess()
         for i in range(self.prob_params.Kiter):
-            U = self.sdc_method(U0, U)
+            U = self.sdc_node_node(U0, U)
         return U
 
     def get_Qmat(self):

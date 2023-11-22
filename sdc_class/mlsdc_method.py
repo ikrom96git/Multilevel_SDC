@@ -35,7 +35,7 @@ class Mlsdc(LevelMatrixSDC):
         Uc_new = self.sdc_c_fast.sdc_method(U0=None, U=Uc, tau=tau)
         Uf_new, tau = self.interpolate(Uc, Uc_new)
         U = Uf_new + Uf
-        U_new = self.sdc_f_fast.sdc_method(U0=None, U=U, tau=tau)
+        U_new = self.sdc_f.sdc_method(U0=None, U=U, tau=tau)
         return U_new
 
     # tau correction from fine to coarse
