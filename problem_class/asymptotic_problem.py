@@ -42,13 +42,14 @@ class Fast_time(Reduced_HO):
     def build_f(self, x, v, t):
         f = -1 * x + 0 * v + t
         return f
+    def force(self,t):
+        return np.ones(len(t))
 
     def convert_time(self, t):
         return t / np.sqrt(self.prob_params.eps)
 
     def fast_time(self, t, order: int = 0):
         time = self.convert_time(t)
-
         if order == 0:
             y0 = 0 * np.sin(time) + np.cos(time) + 1
         else:

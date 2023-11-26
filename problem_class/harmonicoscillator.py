@@ -17,7 +17,8 @@ class HarmonicOscillator:
                 + self.prob_params.f0 * np.cos(self.prob_params.omega * t)
             )
         return f
-
+    def force(self, t):
+        return 0.0*t
     def forced_const(self):
         if self.prob_params.k != 0:
             const = (self.prob_params.c - self.prob_params.omega**2) / (

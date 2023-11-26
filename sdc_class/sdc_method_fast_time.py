@@ -5,12 +5,14 @@ from scipy.optimize import fsolve
 from problem_class.reduced_HO import Reduced_HO
 from problem_class.asymptotic_problem import Fast_time
 from copy import deepcopy
+
+
 # Define SDC class
 class SDC_method_fast_time(Fast_time):
     def __init__(self, problem_params, collocation_params):
         self.collocation_params = _Pars(collocation_params)
         super().__init__(problem_params)
-        self.dt = self.prob_params.dt/np.sqrt(self.prob_params.eps)
+        self.dt = self.prob_params.dt / np.sqrt(self.prob_params.eps)
         self.coll = MatrixSDC(
             self.collocation_params.num_nodes, self.collocation_params.quad_type
         )
@@ -23,10 +25,10 @@ class SDC_method_fast_time(Fast_time):
         X, V = np.split(U, 2)
         X0, V0 = np.split(U0, 2)
         T = np.append(0, self.dt * self.coll.nodes)
-        F=self.build_f(X, V, T)
-        Rx=X0+self.dt*self.coll.Qmat@V0+self.dt**2*self.coll.QQ@F-X
-        Rv=V0+self.dt*self.coll.Qmat@F-V
-        R=np.block([Rx, Rv])
+        F = self.build_f(X, V, T)
+        Rx = X0 + self.dt * self.coll.Qmat @ V0 + self.dt**2 * self.coll.QQ @ F - X
+        Rv = V0 + self.dt * self.coll.Qmat @ F - V
+        R = np.block([Rx, Rv])
         Rabs = np.abs(R)
         return Rabs
 
@@ -76,27 +78,45 @@ class SDC_method_fast_time(Fast_time):
         F = np.block([[self.get_f()], [self.get_f()]])
         return F @ U
 
-    
-    def sdc_node_node(self,U0=None,  U=None, tau=[None, None]):
+    def sdc_node_node(self, U0=None, U=None, tau=[None, None]):
         if U is None:
             U = self.get_initial_guess()
         if U0 is None:
             U0 = self.get_initial_guess(type="spread")
         X, V = np.split(U, 2)
-        Xnew=deepcopy(X)
-        Vnew=deepcopy(V)
-        T=np.append(0, self.dt*self.coll.nodes)
-        Sq=self.dt**2*(self.coll.SQ-self.coll.Sx)@self.build_f(X, V, self.dt*T)
-        S=self.dt*(self.coll.S-self.coll.ST)@self.build_f(X, V, self.dt*T)
+        Xnew = deepcopy(X)
+        Vnew = deepcopy(V)
+        T = np.append(0, self.dt * self.coll.nodes)
+        Sq = (
+            self.dt**2
+            * (self.coll.SQ - self.coll.Sx)
+            @ self.build_f(X, V, self.dt * T)
+        )
+        S = self.dt * (self.coll.S - self.coll.ST) @ self.build_f(X, V, self.dt * T)
         for m in range(self.coll.num_nodes):
-            Sx=self.dt**2*(self.coll.Sx@self.build_f(Xnew, Vnew, T)) 
-            Xnew[m+1]=Xnew[m]+self.dt*self.coll.delta_m[m]*Vnew[0]+Sq[m+1]+Sx[m+1] 
-            function=lambda z:Vnew[m]+0.5*self.dt*self.coll.delta_m[m]*(self.build_f(Xnew[m+1], z, T[m+1])+self.build_f(Xnew[m], Vnew[m], T[m]))+S[m+1]-z
-            Vnew[m+1]=fsolve(function, Vnew[m])
-        Unew=np.block([Xnew, Vnew])
+            Sx = self.dt**2 * (self.coll.Sx @ self.build_f(Xnew, Vnew, T))
+            Xnew[m + 1] = (
+                Xnew[m]
+                + self.dt * self.coll.delta_m[m] * Vnew[0]
+                + Sq[m + 1]
+                + Sx[m + 1]
+            )
+            function = (
+                lambda z: Vnew[m]
+                + 0.5
+                * self.dt
+                * self.coll.delta_m[m]
+                * (
+                    self.build_f(Xnew[m + 1], z, T[m + 1])
+                    + self.build_f(Xnew[m], Vnew[m], T[m])
+                )
+                + S[m + 1]
+                - z
+            )
+            Vnew[m + 1] = fsolve(function, Vnew[m])
+        Unew = np.block([Xnew, Vnew])
         self.residual.append(self.get_residual(U0, Unew))
-        return Unew 
-
+        return Unew
 
     def sdc_method(self, U0=None, U=None, tau=[None, None]):
         # Run the SDC method

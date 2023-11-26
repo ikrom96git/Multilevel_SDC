@@ -14,7 +14,15 @@ def problem_params():
     prob_params["u0"] = np.array([2, 0])
     return prob_params
 
-
+def problem_params2():
+    eps = 0.001
+    prob_params = dict()
+    prob_params["eps"] = eps
+    prob_params["kappa"] = 0.8/np.sqrt(eps)
+    prob_params["c"] = 1 / eps
+    prob_params["f0"] = 1 / eps
+    prob_params["u0"] = np.array([2, 0])
+    return prob_params
 def fast_time():
     prob_params = problem_params()
     t = np.linspace(0, 0.1, 1000)

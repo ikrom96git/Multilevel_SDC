@@ -4,6 +4,7 @@ from sdc_class.sdc_method import SDC_method
 from copy import deepcopy
 from sdc_class.sdc_method_fast_time import SDC_method_fast_time
 
+
 class Mlsdc(LevelMatrixSDC):
     # constructor for the ml-sdc method
     def __init__(self, problem_params, collocation_params):
@@ -77,8 +78,3 @@ class Mlsdc(LevelMatrixSDC):
             U = self.mlsdc_method_fast(U)
 
         return U
-
-
-
-
-

@@ -11,9 +11,13 @@ class Reduced_HO(object):
         f = (
             -self.prob_params.kappa * x
             - self.prob_params.c * v
-            + self.prob_params.f0 * np.cos(t)
         )
         return f
+
+    def force(self, t):
+        fx = self.prob_params.f0 * np.cos(t)
+        dfx = -self.prob_params.f0 * np.sin(t)
+        return fx
 
     def get_force_const(self):
         Omega = (self.prob_params.c - 1.0) / (self.prob_params.kappa)
