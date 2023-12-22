@@ -49,7 +49,16 @@ class Fast_time(Reduced_HO):
         return t / np.sqrt(self.prob_params.eps)
 
     def fast_time(self, t, order: int = 0):
-        time = self.convert_time(t)
+     #   time = self.convert_time(t)
+        time = t
+        if order == 0:
+            return np.sin(t)
+        elif order == 1:
+            return np.cos(t)
+        elif order == 2:
+            return -1 * np.sin(t)
+        else:
+            raise ValueError("The order must be 0, 1 or 2")
         if order == 0:
             y0 = 0 * np.sin(time) + np.cos(time) + 1
         else:

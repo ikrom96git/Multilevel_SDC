@@ -52,7 +52,7 @@ def plot():
     reduced_sol, t=u_exact()
     plt.plot(nodes, X, 'o', label='SDC')
     plt.plot(T, fast_sol, label='Exact')
-    plt.plot(t, reduced_sol[0], label='Reduced')
+  #  plt.plot(t, reduced_sol[0], label='Reduced')
     plt.legend()
     plt.show()
 
