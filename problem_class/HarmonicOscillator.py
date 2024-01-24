@@ -73,7 +73,8 @@ class HarmonicOscillator:
         b = np.linalg.solve(A, self.params.u0)
         return A, b
 
-    def get_solution(self, t):
+    def get_solutionWithoutForce(self, t):
+
         if self.mu == 0:
             *_, b = self.const_withoutFriction(self.params.t0)
             A, *_ = self.const_withoutFriction(t)
@@ -82,7 +83,7 @@ class HarmonicOscillator:
             A, *_ = self.const_withFriction(t)
         return A@b
 
-    def get_solution_interval(self, time: np.narray) -> np.narray:
+    def get_solution_ntimeWithoutForce(self, time: np.narray) -> np.narray:
         solution_store = np.zeros([2, len(time)])
         for tt in range(time):
             solution_store[:, tt] = self.get_solution(tt)
