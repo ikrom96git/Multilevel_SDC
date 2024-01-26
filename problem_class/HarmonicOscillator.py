@@ -60,14 +60,14 @@ class HarmonicOscillator:
             A[1, 0] = dexp*self.get_cos(omega, t)+exp*self.get_dcos(omega, t)
             A[1, 1] = dexp*self.get_sin(omega, t)+exp*self.get_dsin(omega, t)
 
-        if self.determinant > 0:
+        elif self.determinant > 0:
             omega = np.sqrt(self.determinant)
             A[0, 0], A[0, 1] = exp * \
                 self.get_exp(omega, t), exp*self.get_exp(-omega, t)
             A[1, 0] = dexp*self.get_exp(omega, t)+exp*self.get_dexp(omega, t)
             A[1, 1] = dexp*self.get_exp(-omega, t)+exp*self.get_dexp(-omega, t)
 
-        if self.determinant == 0:
+        else:
             A[0, 0], A[0, 1] = exp, t*exp
             A[1, 0], A[1, 1] = dexp, t*dexp+exp
         b = np.linalg.solve(A, self.params.u0)
@@ -78,9 +78,11 @@ class HarmonicOscillator:
         if self.mu == 0:
             *_, b = self.const_withoutFriction(self.params.t0)
             A, *_ = self.const_withoutFriction(t)
-        if self.mu > 0:
+        elif self.mu > 0:
             *_, b = self.const_withFriction(self.params.t0)
             A, *_ = self.const_withFriction(t)
+        else:
+            raise ValueError('Solution without Force is not working')
         return A@b
 
     def get_solution_ntimeWithoutForce(self, time: np.narray) -> np.narray:
@@ -88,3 +90,47 @@ class HarmonicOscillator:
         for tt in range(time):
             solution_store[:, tt] = self.get_solution(tt)
         return solution_store
+
+    def get_constForce(self, t, F0, omega_force):
+        c_omega = (self.params.kappa-omega_force**2)
+        if self.mu != 0:
+            const_omega = c_omega/(self.params.mu*omega_force)
+            Ap = F0/(self.params.mu*omega_force)*(1/(1+const_omega**2))
+            Bp = const_omega*Ap
+        elif self.mu == 0 and c_omega != 0:
+            Ap = 0.0
+            Bp = F0/c_omega
+        else:
+            Ap = 0.5*F0*t/omega_force
+            Bp = 0.0
+        return Ap, Bp, c_omega
+
+    def get_forceTerm(self, t, F0, omega_force):
+        Ap, Bp, c_omega = self.get_constForce(F0, t, omega_force)
+        position_force = Ap * \
+            self.get_sin(omega_force, t)+Bp*self.get_cos(omega_force, t)
+        if c_omega == 0:
+            velocity_force = Ap * \
+                self.get_dsin(omega_force, t)+(0.5*F0/(omega_force)
+                                               )*self.get_sin(omega_force, t)
+        else:
+            velocity_force = Ap * \
+                self.get_dsin(omega_force, t)+Bp*self.get_dcos(omega_force, t)
+        return np.concatenate((position_force, velocity_force))
+
+    def get_solutionWithForce(self, t, F0, omega_force=None):
+        if omega_force is None:
+            omega_force = 1.0
+
+        solutionWithoutForce = self.get_solutionWithoutForce(t)
+        forceTerm = self.get_forceTerm(t, F0, omega_force)
+        solutionWithForce = solutionWithoutForce+forceTerm
+        return solutionWithForce
+
+    def get_solutionTimeWithForce(self, time):
+        F0 = self.params.F0
+        solutionStore = np.zeros((2, len(time)))
+
+        for tt in time:
+            solutionStore[:, tt] = self.get_solutionWithForce(tt, F0)
+        return solutionStore
