@@ -22,6 +22,9 @@ class HarmonicOscillator:
         self.params = _Pars(problem_params)
         self.determinant = self.params.mu**2*0.25-self.params.kappa
 
+    def get_rhs(self, x, v, t):
+        pass
+
     def get_cos(self, omega, t):
         return np.cos(omega*t)
 
