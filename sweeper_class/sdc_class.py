@@ -43,3 +43,6 @@ class sdc_class(object):
         for ii in range(K):
             X, V = self.sdc_sweep(X, V)
         return X, V
+
+if __name__=='__main__':
+    pass
