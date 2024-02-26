@@ -3,6 +3,7 @@ from core.Pars import _Pars
 from transfer_class.CollocationMatrix import CollocationMatrix
 from problem_class.HarmonicOscillator import HarmonicOscillator
 from copy import deepcopy
+from scipy.optimize import fsolve
 
 
 class sdc_class(object):
@@ -12,24 +13,33 @@ class sdc_class(object):
         self.coll = CollocationMatrix(collocation_params)
         self.build_f = HarmonicOscillator(problem_params)
 
-    def sdc_sweep(self, U0, U_old=None):
-        if U_old is None:
-            U_old = deepcopy(U0)
-        X0, V0 = U0[0], U0[1]
-        X_old, V_old = U_old[0], U_old[1]
-        X = deepcopy(X0)
-        V = deepcopy(V0)
-        for kk in range(self.sweeper.Kiter):
-            QX, QV = self.sdc_sweep_integrate(X0, V0, X_old, V_old)
-            for mm in range(self.coll.num_nodes+1):
-                X[mm+1] = QX[mm+1]+self.prob.dt**2 * \
-                    (self.coll.Qx @ self.build_f.get_rhs(X, V))[mm+1]
+    def sdc_sweep(self, X, V):
+        M = self.coll.num_nodes
+        T = self.prob.dt*self.coll.nodes
+        X_old = deepcopy(X)
+        V_old = deepcopy(V)
+        SQF = self.coll.SQ@self.build_f(X_old, V_old, T)
+        SF = self.coll.S@self.build_f(X_old, V_old, T)
+        F_old = self.build_f(X_old, V_old, T)
+        F_new = self.build_f(X, V, T)
+        for m in range(M):
+            SXF = self.coll.Sx@(self.build_f(X, V, T) -
+                                self.build_f(X_old, V_old, T))
+            X[m+1] = X[m]+self.coll.delta_m[m]*V_old[0] + \
+                self.coll.delta_m[m]**2*SXF[m+1] + \
+                self.coll.delta_m[m]**2*SQF[m+1]
+            rhs = V[m]-self.coll.delta_m[m+1]*0.5 * \
+                (F_old[m+1]+F_old[m])+0.5 * \
+                self.coll.delta_m[m+1]*F_new[m]+SF[m+1]
 
-                def V_func(v): return QV[mm+1]+self.prob.dt*
+            def func(v): return rhs+0.5 * \
+                self.coll.delta_m[m+1]*self.build_f(X[m+1], v, T[m+1])-v
+            V[m+1] = fsolve(func, V[0])
+        return X, V
 
-    def sdc_sweep_integrate(self, X0, V0, X_old, V_old):
-        QX = X0+self.prob.dt*self.coll.Q@V0+self.prob.dt**2 * \
-            (self.coll.QQ-self.coll.Qx)@self.build_f.get_rhs(X_old, V_old)
-        QV = V0+self.prob.dt * \
-            (self.coll.Q-self.coll.QT)@self.build_f.get_rhs(X_old, V_old)
-        return QX, QV
+    def SDC_iter(self, K):
+        X = self.prob.u0[0]*np.ones(self.coll.num_nodes+1)
+        V = self.prob.u0[1]*np.ones(self.coll.num_nodes+1)
+        for ii in range(K):
+            X, V = self.sdc_sweep(X, V)
+        return X, V
