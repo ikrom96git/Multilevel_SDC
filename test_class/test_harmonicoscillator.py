@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from problem_class.HarmonicOscillator import HarmonicOscillator
 from plot_class.plot_solutionvstime import plot_solution
 def harmonic_oscillator_test_params():
@@ -13,16 +12,15 @@ def harmonic_oscillator_test_params():
     time=np.linspace(0, 6, 1000)
     return problem_params, time
 def harmonic_oscillator_test_force_params():
-    eps=0.01
-    mu=np.copy(eps)
-    kappa=np.sqrt(eps)
+    mu=0.2
+    kappa=0.2
     problem_params=dict()
-    problem_params['mu']=kappa/mu
+    problem_params['mu']=kappa
     problem_params['kappa']=1/mu
     problem_params['F0']=1/mu
     problem_params['t0']=0.0
-    problem_params['u0']=[2, 1]
-    time=np.linspace(0, 8, 1000)
+    problem_params['u0']=[2, 0]
+    time=np.linspace(0, 30, 1000)
     return problem_params,time
 
 def test_solutionWithoutFriction():
@@ -55,7 +53,7 @@ def test_solution_WithForce():
     problem_params, time=harmonic_oscillator_test_force_params()
     model=HarmonicOscillator(problem_params=problem_params)
     label_set=['Solution with force']
-    Title='Figure 6'
+    Title='Figure 10'
     solution=model.get_solution_ntimeWithForce(time)
     solution_set=[solution[0, :]]
     plot_solution(time, solution_set, Title, label_set)
