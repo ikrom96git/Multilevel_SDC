@@ -22,6 +22,14 @@ class HarmonicOscillator:
         self.params = _Pars(problem_params)
         self.determinant = self.params.mu**2*0.25-self.params.kappa
 
+    def build_f(self, X, V, T):
+        withoutforce=-self.params.mu*V-self.params.kappa*X
+        if self.params.F0 is None:
+            func=withoutforce
+        else:
+            func=withoutforce+self.params.F0*np.cos(T)
+        return func
+
     def get_rhs(self, x, v, t):
         pass
 
