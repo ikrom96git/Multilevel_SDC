@@ -1,7 +1,7 @@
 import numpy as np
 from problem_class.HarmonicOscillator import HarmonicOscillator
 from plot_class.plot_solutionvstime import plot_solution
-def harmonic_oscillator_test_params():
+def get_harmonic_oscillator_test_params():
     problem_params=dict()
     problem_params['mu']=3
     problem_params['kappa']=2
@@ -11,7 +11,7 @@ def harmonic_oscillator_test_params():
     problem_params['F0']=1
     time=np.linspace(0, 6, 1000)
     return problem_params, time
-def harmonic_oscillator_test_force_params():
+def get_harmonic_oscillator_test_force_params():
     mu=0.2
     kappa=0.2
     problem_params=dict()
@@ -24,7 +24,7 @@ def harmonic_oscillator_test_force_params():
     return problem_params,time
 
 def test_solutionWithoutFriction():
-    problem_params, time =harmonic_oscillator_test_params()
+    problem_params, time =get_harmonic_oscillator_test_params()
     problem_params['kappa']=1
     problem_params['u0']=[0, 2]
     problem_params['mu']=0.0
@@ -41,7 +41,7 @@ def exact_solution_WithoutFriction(time, C, omega_0):
     return C*np.sin(omega_0*time)
 
 def test_solution_WithFriction():
-    problem_params, time=harmonic_oscillator_test_params()
+    problem_params, time=get_harmonic_oscillator_test_params()
     model=HarmonicOscillator(problem_params=problem_params)
     label_set=['D<0']
     Title='Figure 5'
@@ -50,7 +50,7 @@ def test_solution_WithFriction():
     plot_solution(time, solution_set, Title, label_set)
 
 def test_solution_WithForce():
-    problem_params, time=harmonic_oscillator_test_force_params()
+    problem_params, time=get_harmonic_oscillator_test_force_params()
     model=HarmonicOscillator(problem_params=problem_params)
     label_set=['Solution with force']
     Title='Figure 10'
