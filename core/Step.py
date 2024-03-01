@@ -245,13 +245,13 @@ class step(FrozenClass):
         self.__transfer_dict[(fine_level, coarse_level)] = self.base_transfer.restrict
 
         if self.base_transfer.params.finter:
-            self.__transfer_dict[
-                (coarse_level, fine_level)
-            ] = self.base_transfer.prolong_f
+            self.__transfer_dict[(coarse_level, fine_level)] = (
+                self.base_transfer.prolong_f
+            )
         else:
-            self.__transfer_dict[
-                (coarse_level, fine_level)
-            ] = self.base_transfer.prolong
+            self.__transfer_dict[(coarse_level, fine_level)] = (
+                self.base_transfer.prolong
+            )
 
     def transfer(self, source, target):
         """
