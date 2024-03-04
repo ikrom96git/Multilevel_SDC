@@ -1,17 +1,16 @@
 import numpy as np
 from core.Pars import _Pars
 from transfer_class.CollocationMatrix import CollocationMatrix
-from problem_class.HarmonicOscillator import HarmonicOscillator
 from copy import deepcopy
 from scipy.optimize import fsolve
 
 
 class sdc_class(object):
-    def __init__(self, problem_params, collocation_params, sweeper_params):
+    def __init__(self, problem_params, collocation_params, sweeper_params, problem_class):
         self.prob = _Pars(problem_params)
         self.sweeper = _Pars(sweeper_params)
         self.coll = CollocationMatrix(collocation_params)
-        self.problem_class = HarmonicOscillator(problem_params)
+        self.problem_class = problem_class(problem_params)
         self.build_f = self.problem_class.build_f
         self.get_residual = []
         self.get_rhs = self.problem_class.get_rhs
@@ -67,6 +66,7 @@ class sdc_class(object):
             V = deepcopy(self.V0)
         else:
             X, V = self.get_initial_guess(initial_guess=initial_guess)
+        
         for ii in range(K):
 
             X, V = self.sdc_sweep(X, V)
@@ -107,7 +107,7 @@ class sdc_class(object):
         return X, V
 
     def get_collocation_problem(self, U):
-        T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
+        T = self.prob.dt * self.coll.nodes
         ret = []
 
         for ii in range(self.coll.num_nodes):
@@ -141,6 +141,7 @@ class sdc_class(object):
             V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         elif initial_guess == "collocation":
             X0, V0 = self.get_collocation_fsolve()
+            
         elif initial_guess == "zeros":
             X0 = np.zeros(self.coll.num_nodes + 1)
             V0 = np.zeros(self.coll.num_nodes + 1)
