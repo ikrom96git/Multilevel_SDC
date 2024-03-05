@@ -6,7 +6,9 @@ from scipy.optimize import fsolve
 
 
 class sdc_class(object):
-    def __init__(self, problem_params, collocation_params, sweeper_params, problem_class):
+    def __init__(
+        self, problem_params, collocation_params, sweeper_params, problem_class
+    ):
         self.prob = _Pars(problem_params)
         self.sweeper = _Pars(sweeper_params)
         self.coll = CollocationMatrix(collocation_params)
@@ -16,13 +18,18 @@ class sdc_class(object):
         self.get_rhs = self.problem_class.get_rhs
         self.X0, self.V0 = self.get_initial_guess()
 
-    def sdc_sweep(self, X, V):
+    def sdc_sweep(self, X_old, V_old, tau_pos=[None], tau_vel=[None]):
+
         M = self.coll.num_nodes
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
-        X_old = deepcopy(X)
-        V_old = deepcopy(V)
+        X = deepcopy(X_old)
+        V = deepcopy(V_old)
         SQF = self.prob.dt**2 * self.coll.SQ @ self.build_f(X_old, V_old, T)
         SF = self.prob.dt * self.coll.S @ self.build_f(X_old, V_old, T)
+        if None not in tau_pos:
+
+            SQF += tau_pos
+            SF += tau_vel
         F_old = self.build_f(X_old, V_old, T)
         F_new = self.build_f(X, V, T)
         for m in range(M):
@@ -55,6 +62,8 @@ class sdc_class(object):
                 )
 
             V[m + 1] = fsolve(func, V[0])
+        self.get_residual.append(self.compute_residual(X, V))
+
         return X, V
 
     def sdc_iter(self, K=None, initial_guess=None):
@@ -66,11 +75,10 @@ class sdc_class(object):
             V = deepcopy(self.V0)
         else:
             X, V = self.get_initial_guess(initial_guess=initial_guess)
-        
+
         for ii in range(K):
 
             X, V = self.sdc_sweep(X, V)
-            self.get_residual.append(self.compute_residual(X, V))
 
         return X, V
 
@@ -141,7 +149,7 @@ class sdc_class(object):
             V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         elif initial_guess == "collocation":
             X0, V0 = self.get_collocation_fsolve()
-            
+
         elif initial_guess == "zeros":
             X0 = np.zeros(self.coll.num_nodes + 1)
             V0 = np.zeros(self.coll.num_nodes + 1)

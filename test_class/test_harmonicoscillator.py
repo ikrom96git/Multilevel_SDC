@@ -1,7 +1,10 @@
 import numpy as np
 from problem_class.HarmonicOscillator import HarmonicOscillator
 from plot_class.plot_solutionvstime import plot_solution
-from default_params.harmonic_oscillator_default_params import get_harmonic_oscillator_default_params
+from default_params.harmonic_oscillator_default_params import (
+    get_harmonic_oscillator_default_params,
+)
+
 
 def test_solutionWithoutFriction():
     problem_params, time = get_harmonic_oscillator_default_params()
