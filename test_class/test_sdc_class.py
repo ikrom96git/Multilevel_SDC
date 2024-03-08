@@ -77,7 +77,7 @@ def test_sdc_with_collocation_residual(Force=True):
     problem_params, collocation_params, sweeper_params, problem_class = (
         get_sdc_default_params(Force=Force)
     )
-    sweeper_params["initial_guess"] = "collocation"
+    sweeper_params["initial_guess"] = "spread"
 
     model_sdc = sdc_class(
         problem_params, collocation_params, sweeper_params, problem_class

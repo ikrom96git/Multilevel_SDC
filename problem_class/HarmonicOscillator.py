@@ -40,6 +40,7 @@ class HarmonicOscillator:
                 - self.params.kappa * u[0]
                 + self.params.F0 * np.cos(t)
             )
+
         return np.asarray([x_dot, v_dot])
 
     def get_cos(self, omega, t):

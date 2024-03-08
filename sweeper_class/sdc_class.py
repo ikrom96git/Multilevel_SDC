@@ -62,8 +62,8 @@ class sdc_class(object):
                 )
 
             V[m + 1] = fsolve(func, V[0])
-        self.get_residual.append(self.compute_residual(X, V))
-
+        self.get_residual.append(self.compute_residual(X, V, tau_pos, tau_vel))
+        # breakpoint()
         return X, V
 
     def sdc_iter(self, K=None, initial_guess=None):
@@ -79,14 +79,14 @@ class sdc_class(object):
         for ii in range(K):
 
             X, V = self.sdc_sweep(X, V)
-
+            # breakpoint()
         return X, V
 
     def get_max_norm_residual(self):
         self.sdc_iter()
         return self.get_residual
 
-    def compute_residual(self, X, V):
+    def compute_residual(self, X, V, tau_pos, tau_vel):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
@@ -97,6 +97,10 @@ class sdc_class(object):
             + self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
             - X
         )
+        if None not in tau_pos:
+            print('tau_pos')
+            pos_residual += tau_pos
+            vel_residual += tau_vel
         vel_max_norm = self.max_norm_residual(vel_residual)
         pos_max_norm = self.max_norm_residual(pos_residual)
         return [pos_max_norm, vel_max_norm]

@@ -11,7 +11,8 @@ def get_mlsdc_default_params(Force=False):
     collocation_params["num_nodes"] = [5, 3]
     sweeper_params = dict()
     sweeper_params["Kiter"] = 10
-    sweeper_params["initial_guess"] = "spread"
+    sweeper_params['coarse_solver']='no_coarse'
+    sweeper_params["initial_guess"] = "collocation"
     problem_class = [HarmonicOscillator, HarmonicOscillator]
     return problem_params, collocation_params, sweeper_params, problem_class
 

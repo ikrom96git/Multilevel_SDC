@@ -28,14 +28,14 @@ def test_solution(Force=True):
     plot_solution(time, solution_set, Title, label_set)
 
 
-def test_residual(Force=True):
+def test_residual(Force=False):
     problem_params, collocation_params, sweeper_params, problem_class = (
         get_mlsdc_default_params(Force=Force)
     )
     mlsdc_model = Mlsdc_class(
         problem_params, collocation_params, sweeper_params, problem_class
     )
-    X, V = mlsdc_model.get_mlsdc_iter_solution(10, initial_guess="collocation")
+    X, V = mlsdc_model.get_mlsdc_iter_solution()
     Residual_mlsdc = mlsdc_model.sdc_fine_level.get_residual
     Kiter = np.arange(1, 10 + 1, 1)
     Title = "Residual"
@@ -58,7 +58,7 @@ def test_mlsdc_vs_sdc_solution(Force=False):
         problem_class_sdc,
     ) = get_sdc_default_params(Force=Force)
     collocation_params_mlsdc["num_nodes"] = [5, 5]
-    sweeper_params_mlsdc['coarse_solver']='no_coarse'
+    sweeper_params_mlsdc["coarse_solver"] = "spread"
     for kk in range(1, 6):
         sweeper_params_sdc["Kiter"] = kk
         sweeper_params_mlsdc["Kiter"] = kk
@@ -76,6 +76,7 @@ def test_mlsdc_vs_sdc_solution(Force=False):
         )
         X_mlsdc, V_mlsdc = model_mlsdc.get_mlsdc_iter_solution()
         X_sdc, V_sdc = model_sdc.sdc_iter()
+        
         if (X_mlsdc == X_sdc).all():
             print(f"Solutoin of position is the same for the iteration {kk}")
         else:
@@ -85,9 +86,17 @@ def test_mlsdc_vs_sdc_solution(Force=False):
             print(f"Solution of velocity is the same for the iteration {kk}")
         else:
             print(f"Solution of velocity is not the same for the iteration {kk}")
+    Residual_mlsdc=model_mlsdc.sdc_fine_level.get_residual
+    Residual_sdc=model_sdc.get_residual
+    title='Residual'
+    label=['mlsdc', 'sdc']
+    breakpoint()
+    residual=[np.array(Residual_mlsdc)[:,0], np.array(Residual_sdc)[:,0]]
+    time=np.arange(0, 5)
+    plot_residual(time, residual, title, label)
 
 
 if __name__ == "__main__":
     # test_solution()
-    # test_residual()
-    test_mlsdc_vs_sdc_solution()
+    test_residual()
+    # test_mlsdc_vs_sdc_solution()
