@@ -52,7 +52,6 @@ class Mlsdc_class(transfer_class):
             X, V = self.sdc_fine_level.get_initial_guess(initial_guess=initial_guess)
 
         for ii in range(K_iter):
-            breakpoint()
             X_new, V_new = self.mlsdc_sweep(X, V)
             X=deepcopy(X_new)
             V=deepcopy(V_new)

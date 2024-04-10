@@ -90,7 +90,6 @@ class transfer_class(object):
         RF_fine_pos = self.restrict(self.sdc_fine_level.coll.QQ[1:, 1:] @ F_fine)
         RF_coarse_pos = self.sdc_coarse_level.coll.QQ[1:, 1:] @ F_coarse
         tau_pos =(self.sdc_fine_level.prob.dt**2) * (RF_fine_pos - RF_coarse_pos)
-        breakpoint()
         tau_vel = (self.sdc_fine_level.prob.dt) * (RF_fine_vel - RF_coarse_vel)
         X_coarse = np.append(X_fine[0], X_coarse)
         V_coarse = np.append(V_fine[0], V_coarse)

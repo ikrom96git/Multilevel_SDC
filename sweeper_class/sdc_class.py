@@ -19,20 +19,21 @@ class sdc_class(object):
         self.X0, self.V0 = self.get_initial_guess()
 
     def sdc_sweep(self, X_old, V_old, tau_pos=[None], tau_vel=[None]):
-
         M = self.coll.num_nodes
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         X = deepcopy(X_old)
         V = deepcopy(V_old)
         SQF = self.prob.dt**2 * self.coll.SQ @ self.build_f(X_old, V_old, T)
         SF = self.prob.dt * self.coll.S @ self.build_f(X_old, V_old, T)
+        
         if None not in tau_pos:
 
             SQF += tau_pos
             SF += tau_vel
         F_old = self.build_f(X_old, V_old, T)
-        F_new = self.build_f(X, V, T)
+        
         for m in range(M):
+            F_new = self.build_f(X, V, T)
             SXF = (
                 self.prob.dt**2
                 * self.coll.Sx
@@ -46,7 +47,7 @@ class sdc_class(object):
             )
             rhs = (
                 V[m]
-                - self.prob.dt * self.coll.delta_m[m] * 0.5 * (F_old[m + 1] + F_old[m])
+                - 0.5 *self.prob.dt * self.coll.delta_m[m] *  (F_old[m + 1] + F_old[m])
                 + 0.5 * self.prob.dt * self.coll.delta_m[m] * F_new[m]
                 + SF[m + 1]
             )
@@ -61,12 +62,23 @@ class sdc_class(object):
                     - v
                 )
 
-            V[m + 1] = fsolve(func, V[0])
+            V[m + 1] = fsolve(func, V[m])
         self.get_residual.append(self.compute_residual(X, V, tau_pos, tau_vel))
-        # breakpoint()
+        
         return X, V
 
     def sdc_iter(self, K=None, initial_guess=None):
+        """
+        Performs K iterations of the SDC sweep process and returns the final X and V values.
+
+        Args:
+            K (int, optional): Number of iterations. Defaults to None.
+            initial_guess (any, optional): Initial values for X and V. Defaults to None.
+
+        Returns:
+            tuple: Final X and V values after K iterations of the SDC sweep process.
+        """
+
         if K is None:
             K = self.sweeper.Kiter
         if initial_guess is None:
