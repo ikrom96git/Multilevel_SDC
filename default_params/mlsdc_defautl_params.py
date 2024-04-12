@@ -5,6 +5,19 @@ from problem_class.HarmonicOscillator import HarmonicOscillator
 
 
 def get_mlsdc_default_params(Force=False):
+    """
+    Get default parameters for a Multilevel Spectral Deferred Correction (MLSDC) method.
+
+    Args:
+        Force (bool): Flag to force the computation of default parameters.
+
+    Returns:
+        tuple: A tuple containing problem_params (dict), collocation_params (dict), sweeper_params (dict), and problem_class (list).
+
+    Examples:
+        problem_params, collocation_params, sweeper_params, problem_class = get_mlsdc_default_params(Force=True)
+    """
+
     problem_params, *_ = get_harmonic_oscillator_default_params(Force=Force)
     collocation_params = dict()
     collocation_params["quad_type"] = "GAUSS"
