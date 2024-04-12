@@ -44,6 +44,7 @@ def test_solution_WithForce():
     solution_set = [solution[0, :]]
     plot_solution(time, solution_set, Title, label_set)
 
+
 if __name__ == "__main__":
     # test_solutionWithoutFriction()
     # test_solution_WithFriction()
