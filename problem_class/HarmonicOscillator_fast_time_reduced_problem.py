@@ -18,8 +18,8 @@ class HarmonicOscillator_fast_time(object):
     def get_exact_solution(self, t):
         a_0 = 0
         b_0 = 1
-        dy=np.cos(t)
-        
+        dy = np.cos(t)
+
         dy = a_0 * np.sin(t) + b_0 * np.cos(t) + self.params.F0
         dv = a_0 * np.cos(t) - b_0 * np.sin(t)
         return np.array([dy, dv])

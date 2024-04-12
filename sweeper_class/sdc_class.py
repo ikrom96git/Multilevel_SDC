@@ -19,35 +19,34 @@ class sdc_class(object):
         self.X0, self.V0 = self.get_initial_guess()
 
     def sdc_sweep(self, X_old, V_old, tau_pos=[None], tau_vel=[None]):
+
         M = self.coll.num_nodes
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         X = deepcopy(X_old)
         V = deepcopy(V_old)
-        SQF = self.prob.dt**2 * self.coll.SQ @ self.build_f(X_old, V_old, T)
-        SF = self.prob.dt * self.coll.S @ self.build_f(X_old, V_old, T)
-        
+        F_old = self.build_f(X_old, V_old, T)
+        SQF = self.prob.dt**2 * (self.coll.SQ @ F_old - self.coll.Sx @ F_old)
+        SF = self.prob.dt * self.coll.S @ F_old
         if None not in tau_pos:
 
-            SQF += tau_pos
-            SF += tau_vel
-        F_old = self.build_f(X_old, V_old, T)
-        
+            tau_pos_nn = np.append(0, tau_pos[1:] - tau_pos[:-1])
+            tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
+
+            SQF += tau_pos_nn
+            SF += tau_vel_nn
+
         for m in range(M):
             F_new = self.build_f(X, V, T)
-            SXF = (
-                self.prob.dt**2
-                * self.coll.Sx
-                @ (self.build_f(X, V, T) - self.build_f(X_old, V_old, T))
-            )
+            SXF = self.prob.dt**2 * self.coll.Sx @ self.build_f(X, V, T)
             X[m + 1] = (
                 X[m]
-                + self.prob.dt * self.coll.delta_m[m] * V_old[0]
+                + self.prob.dt * self.coll.delta_m[m] * V[0]
                 + SXF[m + 1]
                 + SQF[m + 1]
             )
             rhs = (
                 V[m]
-                - 0.5 *self.prob.dt * self.coll.delta_m[m] *  (F_old[m + 1] + F_old[m])
+                - 0.5 * self.prob.dt * self.coll.delta_m[m] * (F_old[m + 1] + F_old[m])
                 + 0.5 * self.prob.dt * self.coll.delta_m[m] * F_new[m]
                 + SF[m + 1]
             )
@@ -64,7 +63,7 @@ class sdc_class(object):
 
             V[m + 1] = fsolve(func, V[m])
         self.get_residual.append(self.compute_residual(X, V, tau_pos, tau_vel))
-        
+
         return X, V
 
     def sdc_iter(self, K=None, initial_guess=None):
@@ -91,7 +90,7 @@ class sdc_class(object):
         for ii in range(K):
 
             X, V = self.sdc_sweep(X, V)
-            # breakpoint()
+
         return X, V
 
     def get_max_norm_residual(self):
@@ -110,7 +109,6 @@ class sdc_class(object):
             - X
         )
         if None not in tau_pos:
-            print('tau_pos')
             pos_residual += tau_pos
             vel_residual += tau_vel
         vel_max_norm = self.max_norm_residual(vel_residual)

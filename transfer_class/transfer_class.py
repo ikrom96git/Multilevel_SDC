@@ -35,6 +35,7 @@ class transfer_class(object):
         self.Rcoll = self.get_transfer_matrix_Q(
             self.sdc_coarse_level.coll.nodes, self.sdc_fine_level.coll.nodes
         )
+
     # def get_sorted_params(self, problem_params, collocation_params, sweeper_params, problem_class):
     #     if len(problem_params)==2:
     #         problem_params_fine=problem_params[0]
@@ -62,7 +63,6 @@ class transfer_class(object):
     #         problem_class_coarse,
     #     )
 
-
     @staticmethod
     def get_transfer_matrix_Q(f_nodes, c_nodes):
         approx = LagrangeApproximation(c_nodes)
@@ -80,16 +80,18 @@ class transfer_class(object):
     def fas_correction(self, X_fine, V_fine):
         X_coarse = self.restrict(X_fine[1:])
         V_coarse = self.restrict(V_fine[1:])
-        dt=self.sdc_fine_level.prob.dt
-        F_fine = self.sdc_fine_level.build_f(X_fine[1:], V_fine[1:], dt*self.sdc_fine_level.coll.nodes)
+        dt = self.sdc_fine_level.prob.dt
+        F_fine = self.sdc_fine_level.build_f(
+            X_fine[1:], V_fine[1:], dt * self.sdc_fine_level.coll.nodes
+        )
         F_coarse = self.sdc_coarse_level.build_f(
-            X_coarse, V_coarse, dt*self.sdc_coarse_level.coll.nodes
+            X_coarse, V_coarse, dt * self.sdc_coarse_level.coll.nodes
         )
         RF_fine_vel = self.restrict(self.sdc_fine_level.coll.Q[1:, 1:] @ F_fine)
         RF_coarse_vel = self.sdc_coarse_level.coll.Q[1:, 1:] @ F_coarse
         RF_fine_pos = self.restrict(self.sdc_fine_level.coll.QQ[1:, 1:] @ F_fine)
         RF_coarse_pos = self.sdc_coarse_level.coll.QQ[1:, 1:] @ F_coarse
-        tau_pos =(self.sdc_fine_level.prob.dt**2) * (RF_fine_pos - RF_coarse_pos)
+        tau_pos = (self.sdc_fine_level.prob.dt**2) * (RF_fine_pos - RF_coarse_pos)
         tau_vel = (self.sdc_fine_level.prob.dt) * (RF_fine_vel - RF_coarse_vel)
         X_coarse = np.append(X_fine[0], X_coarse)
         V_coarse = np.append(V_fine[0], V_coarse)

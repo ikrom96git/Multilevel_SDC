@@ -76,7 +76,7 @@ def test_mlsdc_vs_sdc_solution(Force=False):
         )
         X_mlsdc, V_mlsdc = model_mlsdc.get_mlsdc_iter_solution()
         X_sdc, V_sdc = model_sdc.sdc_iter()
-        
+
         if (X_mlsdc == X_sdc).all():
             print(f"Solutoin of position is the same for the iteration {kk}")
         else:
@@ -86,13 +86,13 @@ def test_mlsdc_vs_sdc_solution(Force=False):
             print(f"Solution of velocity is the same for the iteration {kk}")
         else:
             print(f"Solution of velocity is not the same for the iteration {kk}")
-    Residual_mlsdc=model_mlsdc.sdc_fine_level.get_residual
-    Residual_sdc=model_sdc.get_residual
-    title='Residual'
-    label=['mlsdc', 'sdc']
+    Residual_mlsdc = model_mlsdc.sdc_fine_level.get_residual
+    Residual_sdc = model_sdc.get_residual
+    title = "Residual"
+    label = ["mlsdc", "sdc"]
     breakpoint()
-    residual=[np.array(Residual_mlsdc)[:,0], np.array(Residual_sdc)[:,0]]
-    time=np.arange(0, 5)
+    residual = [np.array(Residual_mlsdc)[:, 0], np.array(Residual_sdc)[:, 0]]
+    time = np.arange(0, 5)
     plot_residual(time, residual, title, label)
 
 
