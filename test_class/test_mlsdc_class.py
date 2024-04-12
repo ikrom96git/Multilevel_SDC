@@ -61,7 +61,7 @@ def test_mlsdc_vs_sdc_solution(Force=False):
     collocation_params_mlsdc["num_nodes"] = [5, 5]
     sweeper_params_mlsdc["coarse_solver"] = "spread"
     for kk in range(1, 5):
-        sweeper_params_sdc["Kiter"] = 2*kk
+        sweeper_params_sdc["Kiter"] = 2 * kk
         sweeper_params_mlsdc["Kiter"] = kk
         model_mlsdc = Mlsdc_class(
             problem_params_mlsdc,
@@ -87,7 +87,8 @@ def test_mlsdc_vs_sdc_solution(Force=False):
             print(f"Solution of velocity is the same for the iteration {kk}")
         else:
             print(f"Solution of velocity is not the same for the iteration {kk}")
-    
+
+
 if __name__ == "__main__":
     # test_solution()
     # test_residual()
