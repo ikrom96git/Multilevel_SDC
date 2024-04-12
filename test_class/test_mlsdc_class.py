@@ -32,6 +32,7 @@ def test_residual(Force=False):
     problem_params, collocation_params, sweeper_params, problem_class = (
         get_mlsdc_default_params(Force=Force)
     )
+    sweeper_params["initial_guess"] = "collocation"
     mlsdc_model = Mlsdc_class(
         problem_params, collocation_params, sweeper_params, problem_class
     )
@@ -59,8 +60,8 @@ def test_mlsdc_vs_sdc_solution(Force=False):
     ) = get_sdc_default_params(Force=Force)
     collocation_params_mlsdc["num_nodes"] = [5, 5]
     sweeper_params_mlsdc["coarse_solver"] = "spread"
-    for kk in range(1, 6):
-        sweeper_params_sdc["Kiter"] = kk
+    for kk in range(1, 5):
+        sweeper_params_sdc["Kiter"] = 2*kk
         sweeper_params_mlsdc["Kiter"] = kk
         model_mlsdc = Mlsdc_class(
             problem_params_mlsdc,
@@ -86,17 +87,8 @@ def test_mlsdc_vs_sdc_solution(Force=False):
             print(f"Solution of velocity is the same for the iteration {kk}")
         else:
             print(f"Solution of velocity is not the same for the iteration {kk}")
-    Residual_mlsdc = model_mlsdc.sdc_fine_level.get_residual
-    Residual_sdc = model_sdc.get_residual
-    title = "Residual"
-    label = ["mlsdc", "sdc"]
-    breakpoint()
-    residual = [np.array(Residual_mlsdc)[:, 0], np.array(Residual_sdc)[:, 0]]
-    time = np.arange(0, 5)
-    plot_residual(time, residual, title, label)
-
-
+    
 if __name__ == "__main__":
     # test_solution()
-    test_residual()
-    # test_mlsdc_vs_sdc_solution()
+    # test_residual()
+    test_mlsdc_vs_sdc_solution()

@@ -8,26 +8,7 @@ class transfer_class(object):
     def __init__(
         self, problem_params, collocation_params, sweeper_params, problem_class
     ):
-        # self.get_sorted_params(problem_params, collocation_params, sweeper_params, problem_class)
-        if len(problem_class) == 1:
-            problem_class_fine = problem_class[0]
-            problem_class_coarse = problem_class[0]
-        else:
-            problem_class_fine = problem_class[0]
-            problem_class_coarse = problem_class[1]
-        collocation_params_fine = deepcopy(collocation_params)
-        collocation_params_fine["num_nodes"] = collocation_params["num_nodes"][0]
-        collocation_params_coarse = deepcopy(collocation_params)
-        collocation_params_coarse["num_nodes"] = collocation_params["num_nodes"][1]
-        self.sdc_fine_level = sdc_class(
-            problem_params, collocation_params_fine, sweeper_params, problem_class_fine
-        )
-        self.sdc_coarse_level = sdc_class(
-            problem_params,
-            collocation_params_coarse,
-            sweeper_params,
-            problem_class_coarse,
-        )
+        self.get_sorted_params(problem_params, collocation_params, sweeper_params, problem_class)
         self.Pcoll = self.get_transfer_matrix_Q(
             self.sdc_fine_level.coll.nodes, self.sdc_coarse_level.coll.nodes
         )
@@ -36,32 +17,31 @@ class transfer_class(object):
             self.sdc_coarse_level.coll.nodes, self.sdc_fine_level.coll.nodes
         )
 
-    # def get_sorted_params(self, problem_params, collocation_params, sweeper_params, problem_class):
-    #     if len(problem_params)==2:
-    #         problem_params_fine=problem_params[0]
-    #         problem_params_coarse=problem_params[1]
-    #     else:
-    #         problem_params_fine=problem_params
-    #         problem_params_coarse=problem_params
-    #     if len(problem_class) == 1:
-    #         problem_class_fine = problem_class[0]
-    #         problem_class_coarse = problem_class[0]
-    #     else:
-    #         problem_class_fine = problem_class[0]
-    #         problem_class_coarse = problem_class[1]
-    #     collocation_params_fine = deepcopy(collocation_params)
-    #     collocation_params_fine["num_nodes"] = collocation_params["num_nodes"][0]
-    #     collocation_params_coarse = deepcopy(collocation_params)
-    #     collocation_params_coarse["num_nodes"] = collocation_params["num_nodes"][1]
-    #     self.sdc_fine_level = sdc_class(
-    #         problem_params_fine, collocation_params_fine, sweeper_params, problem_class_fine
-    #     )
-    #     self.sdc_coarse_level = sdc_class(
-    #         problem_params_coarse,
-    #         collocation_params_coarse,
-    #         sweeper_params,
-    #         problem_class_coarse,
-    #     )
+    def get_sorted_params(self, problem_params, collocation_params, sweeper_params, problem_class):
+        if len(problem_params)==2:
+            problem_params_fine=problem_params[0]
+            problem_params_coarse=problem_params[1]
+        else:
+            problem_params_fine=problem_params
+            problem_params_coarse=problem_params
+        problem_class_fine = problem_class[0]
+        if len(problem_class) == 1:
+            problem_class_coarse = problem_class[0]
+        else:
+            problem_class_coarse = problem_class[1]
+        collocation_params_fine = deepcopy(collocation_params)
+        collocation_params_fine["num_nodes"] = collocation_params["num_nodes"][0]
+        collocation_params_coarse = deepcopy(collocation_params)
+        collocation_params_coarse["num_nodes"] = collocation_params["num_nodes"][1]
+        self.sdc_fine_level = sdc_class(
+            problem_params_fine, collocation_params_fine, sweeper_params, problem_class_fine
+        )
+        self.sdc_coarse_level = sdc_class(
+            problem_params_coarse,
+            collocation_params_coarse,
+            sweeper_params,
+            problem_class_coarse,
+        )
 
     @staticmethod
     def get_transfer_matrix_Q(f_nodes, c_nodes):
@@ -69,14 +49,11 @@ class transfer_class(object):
         return approx.getInterpolationMatrix(f_nodes)
 
     def restrict(self, U):
-        U_restricted = self.Rcoll @ U
-        return U_restricted
-
+        return self.Rcoll @ U
+        
     def interpolate(self, U):
-        U_interpolated = self.Pcoll @ U[1:]
-        U_interpolated = np.append(U[0], U_interpolated)
-        return U_interpolated
-
+        return np.append(U[0], self.Pcoll @ U[1:])
+        
     def fas_correction(self, X_fine, V_fine):
         X_coarse = self.restrict(X_fine[1:])
         V_coarse = self.restrict(V_fine[1:])
