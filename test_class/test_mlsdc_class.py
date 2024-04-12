@@ -91,5 +91,5 @@ def test_mlsdc_vs_sdc_solution(Force=False):
 
 if __name__ == "__main__":
     # test_solution()
-    # test_residual()
-    test_mlsdc_vs_sdc_solution()
+    test_residual()
+    # test_mlsdc_vs_sdc_solution()
