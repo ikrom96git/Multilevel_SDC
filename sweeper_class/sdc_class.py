@@ -87,7 +87,7 @@ class sdc_class(object):
         else:
             X, V = self.get_initial_guess(initial_guess=initial_guess)
 
-        for ii in range(K):
+        for _ in range(K):
 
             X, V = self.sdc_sweep(X, V)
 

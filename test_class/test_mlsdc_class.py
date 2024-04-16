@@ -32,7 +32,7 @@ def test_residual(Force=False):
     problem_params, collocation_params, sweeper_params, problem_class = (
         get_mlsdc_default_params(Force=Force)
     )
-    sweeper_params["initial_guess"] = "spread"
+    sweeper_params["initial_guess"] = "collocation"
     mlsdc_model = Mlsdc_class(
         problem_params, collocation_params, sweeper_params, problem_class
     )
@@ -91,5 +91,5 @@ def test_mlsdc_vs_sdc_solution(Force=False):
 
 if __name__ == "__main__":
     # test_solution()
-    test_residual()
+    test_residual(Force=True)
     # test_mlsdc_vs_sdc_solution()
