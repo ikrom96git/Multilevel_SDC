@@ -10,6 +10,7 @@ class Mlsdc_class(transfer_class):
         super().__init__(
             problem_params, collocation_params, sweeper_params, problem_class
         )
+        self.first_order_model=len(problem_class)
 
     def mlsdc_sweep(self, X_old, V_old):
         tau_pos, tau_vel, X_coarse_old, V_coarse_old = self.fas_correction(X_old, V_old)
@@ -17,10 +18,18 @@ class Mlsdc_class(transfer_class):
         X_coarse, V_coarse = self.get_coarse_solver(
             X_coarse_old, V_coarse_old, tau_pos, tau_vel
         )
-        # interpolation
-
-        X_inter = X_old + self.interpolate(X_coarse - X_coarse_old)
-        V_inter = V_old + self.interpolate(V_coarse - V_coarse_old)
+        
+        if self.first_order_model==3:
+            
+            X_coarse_first, V_coarse_first= self.sdc_coarse_first_order.sdc_sweep(X_coarse_old, V_coarse_old)
+            pos_coarse=self.sdc_coarse_first_order.problem_class.asyp_expansion(X_coarse, X_coarse_first, eps=0.001)
+            vel_coarse=self.sdc_coarse_first_order.problem_class.asyp_expansion(V_coarse, V_coarse_first, eps=0.001)
+            X_inter = X_old + self.interpolate(pos_coarse - X_coarse_old)
+            V_inter = V_old + self.interpolate(vel_coarse - V_coarse_old)
+        else:
+            # interpolation
+            X_inter = X_old + self.interpolate(X_coarse - X_coarse_old)
+            V_inter = V_old + self.interpolate(V_coarse - V_coarse_old)
         X_fine, V_fine = self.sdc_fine_level.sdc_sweep(X_inter, V_inter)
         return X_fine, V_fine
 

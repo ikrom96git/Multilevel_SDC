@@ -14,7 +14,7 @@ from sweeper_class.sdc_class import sdc_class
 from default_params.sdc_default_params import get_sdc_default_params
 from problem_class.HarmonicOscillator import HarmonicOscillator
 from problem_class.HarmonicOscillator_fast_time_reduced_problem import (
-    HarmonicOscillator_fast_time,
+    HarmonicOscillator_fast_time, HarmonicOscillator_fast_time_first_order
 )
 
 
@@ -90,8 +90,32 @@ def test_residual_fast_time():
     resdual_set=[np.array(residual_sdc)[:,0], np.array(residual_sdc)[:,1]]
     plot_residual(Kiter, resdual_set, Title, label_set)
 
+def test_fast_time_first_order_model():
+    
+    prob_reduced_model_params, time_reduced = (
+        get_harmonic_oscillator_reduced_model_params()
+    )
+    prob_fast_time_params, time_fast = get_harmonic_oscillator_fast_time_params(
+        Fast_time=True
+    )
+    
+    model_reduced = HarmonicOscillator(prob_reduced_model_params)
+    model_fast_time = HarmonicOscillator_fast_time(prob_fast_time_params)
+    model_first_order=HarmonicOscillator_fast_time_first_order(prob_fast_time_params)
+    solution_reduced = model_reduced.get_solution_ntimeWithForce(time_reduced)
+    solution_fast = model_fast_time.get_ntime_exact_solution(time_fast)
+    solution_first=model_first_order.get_ntime_exact_solution(time_fast)
+    position=model_first_order.asyp_expansion(solution_fast[0,:], solution_first[0,:], eps=0.001)
+    Title = "Solution of Fast time"
+    label_set = ["Exact solution", "Reduced model solution", "First order"]
+    solution_set = [solution_reduced[0, :], solution_fast[0, :], position]
+   
+    plot_solution(time_reduced, solution_set, Title, label_set)
+    
+
 if __name__ == "__main__":
     # test_compare_solution_fast_time_reduced()
     # test_compare_solution_slow_time_reduced()
     # test_fast_time_SDC()
-    test_residual_fast_time()
+    # test_residual_fast_time()
+    test_fast_time_first_order_model()
