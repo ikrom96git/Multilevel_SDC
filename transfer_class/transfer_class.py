@@ -75,8 +75,8 @@ class transfer_class(object):
         RF_coarse_vel = self.sdc_coarse_level.coll.Q[1:, 1:] @ F_coarse
         RF_fine_pos = self.restrict(self.sdc_fine_level.coll.QQ[1:, 1:] @ F_fine)
         RF_coarse_pos = self.sdc_coarse_level.coll.QQ[1:, 1:] @ F_coarse
-        tau_pos = (self.sdc_fine_level.prob.dt**2) * (RF_fine_pos - RF_coarse_pos)
-        tau_vel = (self.sdc_fine_level.prob.dt) * (RF_fine_vel - RF_coarse_vel)
+        tau_pos = (dt**2) * (RF_fine_pos - RF_coarse_pos)
+        tau_vel = (dt) * (RF_fine_vel - RF_coarse_vel)
         X_coarse = np.append(X_fine[0], X_coarse)
         V_coarse = np.append(V_fine[0], V_coarse)
         tau_pos = np.append(0.0, tau_pos)
