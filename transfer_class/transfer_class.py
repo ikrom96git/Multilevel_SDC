@@ -72,21 +72,25 @@ class transfer_class(object):
     def interpolate(self, U):
         return np.append(U[0], self.Pcoll @ U[1:])
 
-    def fas_correction(self, X_fine, V_fine):
+    def fas_correction(self, X_fine, V_fine, fine_level=None, coarse_level=None):
+        if fine_level is None:
+            fine_level = self.sdc_fine_level
+        if coarse_level is None:
+            coarse_level = self.sdc_coarse_level
         X_coarse = self.restrict(X_fine[1:])
         V_coarse = self.restrict(V_fine[1:])
-        dt_fine = self.sdc_fine_level.prob.dt
-        dt_coarse = self.sdc_coarse_level.prob.dt
-        F_fine = self.sdc_fine_level.build_f(
-            X_fine[1:], V_fine[1:], dt_fine * self.sdc_fine_level.coll.nodes
+        dt_fine = fine_level.prob.dt
+        dt_coarse = coarse_level.prob.dt
+        F_fine = fine_level.build_f(
+            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
         )
-        F_coarse = self.sdc_coarse_level.build_f(
-            X_coarse, V_coarse, dt_coarse * self.sdc_coarse_level.coll.nodes
+        F_coarse = coarse_level.build_f(
+            X_coarse, V_coarse, dt_coarse * coarse_level.coll.nodes
         )
-        RF_fine_vel = self.restrict(self.sdc_fine_level.coll.Q[1:, 1:] @ F_fine)
-        RF_coarse_vel = self.sdc_coarse_level.coll.Q[1:, 1:] @ F_coarse
-        RF_fine_pos = self.restrict(self.sdc_fine_level.coll.QQ[1:, 1:] @ F_fine)
-        RF_coarse_pos = self.sdc_coarse_level.coll.QQ[1:, 1:] @ F_coarse
+        RF_fine_vel = self.restrict(fine_level.coll.Q[1:, 1:] @ F_fine)
+        RF_coarse_vel = coarse_level.coll.Q[1:, 1:] @ F_coarse
+        RF_fine_pos = self.restrict(fine_level.coll.QQ[1:, 1:] @ F_fine)
+        RF_coarse_pos = coarse_level.coll.QQ[1:, 1:] @ F_coarse
         tau_pos = ((dt_fine**2) * RF_fine_pos) - ((dt_coarse) ** 2 * RF_coarse_pos)
         tau_vel = dt_fine * RF_fine_vel - dt_coarse * RF_coarse_vel
         X_coarse = np.append(X_fine[0], X_coarse)

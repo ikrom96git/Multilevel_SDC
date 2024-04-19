@@ -83,6 +83,7 @@ def test_mlsdc_first_order_model():
     problem_fast_time_params, *_ = get_harmonic_oscillator_fast_time_params(
         Fast_time=True
     )
+    problem_class_zeros_order = [problem_class[0], HarmonicOscillator_fast_time]
     problem_class_reduced = [
         problem_class[0],
         HarmonicOscillator_fast_time,
@@ -93,21 +94,34 @@ def test_mlsdc_first_order_model():
     model_mlsdc = Mlsdc_class(
         problem_params, collocation_params, sweeper_params, problem_class
     )
+    model_zeros_order = Mlsdc_class(
+        problem_params_reduced,
+        collocation_params,
+        sweeper_params,
+        problem_class_zeros_order,
+    )
     model_reduced_mlsdc = Mlsdc_class(
         problem_params_reduced,
         collocation_params,
         sweeper_params,
         problem_class_reduced,
     )
+
     model_mlsdc.get_mlsdc_iter_solution()
+    model_zeros_order.get_mlsdc_iter_solution()
     model_reduced_mlsdc.get_mlsdc_iter_solution()
     Residual_mlsdc = model_mlsdc.sdc_fine_level.get_residual
+    Residual_zeros_order = model_zeros_order.sdc_fine_level.get_residual
     Residual_reduced = model_reduced_mlsdc.sdc_fine_level.get_residual
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
 
-    Title = "Residual MLSDC VS Reduced model"
-    label_set = ["MLSDC ", "$1^{st}$ order model"]
-    residual_set = [np.array(Residual_mlsdc)[:, 0], np.array(Residual_reduced)[:, 0]]
+    Title = "Residual MLSDC VS Reduced model (Position)"
+    label_set = ["MLSDC ", "$0^{th}$ order model", "$1^{st}$ order model"]
+    residual_set = [
+        np.array(Residual_mlsdc)[:, 0],
+        np.array(Residual_zeros_order)[:, 0],
+        np.array(Residual_reduced)[:, 0],
+    ]
     plot_residual(Kiter, residual_set, Title, label_set)
 
 
