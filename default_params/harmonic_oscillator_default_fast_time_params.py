@@ -2,7 +2,7 @@ import numpy as np
 
 
 def get_harmonic_oscillator_fast_time_params(Fast_time=False):
-    
+
     problem_params = dict()
     problem_params["mu"] = 0.0
     problem_params["kappa"] = 1.0

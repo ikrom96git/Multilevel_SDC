@@ -22,7 +22,7 @@ class transfer_class(object):
     def get_sorted_params(
         self, problem_params, collocation_params, sweeper_params, problem_class
     ):
-        
+
         if len(problem_params) == 2:
             problem_params_fine = problem_params[0]
             problem_params_coarse = problem_params[1]
@@ -36,13 +36,18 @@ class transfer_class(object):
         collocation_params_coarse["num_nodes"] = collocation_params["num_nodes"][1]
         if len(problem_class) == 1:
             problem_class_coarse = problem_class[0]
-        elif len(problem_class)==2:
+        elif len(problem_class) == 2:
             problem_class_coarse = problem_class[1]
         else:
             problem_class_coarse = problem_class[1]
-            problem_class_coarse_first=problem_class[2]
-            self.sdc_coarse_first_order=sdc_class(problem_params_coarse, collocation_params_coarse, sweeper_params, problem_class_coarse_first)
-        
+            problem_class_coarse_first = problem_class[2]
+            self.sdc_coarse_first_order = sdc_class(
+                problem_params_coarse,
+                collocation_params_coarse,
+                sweeper_params,
+                problem_class_coarse_first,
+            )
+
         self.sdc_fine_level = sdc_class(
             problem_params_fine,
             collocation_params_fine,
@@ -55,7 +60,6 @@ class transfer_class(object):
             sweeper_params,
             problem_class_coarse,
         )
-        
 
     @staticmethod
     def get_transfer_matrix_Q(f_nodes, c_nodes):
@@ -72,7 +76,7 @@ class transfer_class(object):
         X_coarse = self.restrict(X_fine[1:])
         V_coarse = self.restrict(V_fine[1:])
         dt_fine = self.sdc_fine_level.prob.dt
-        dt_coarse=self.sdc_coarse_level.prob.dt
+        dt_coarse = self.sdc_coarse_level.prob.dt
         F_fine = self.sdc_fine_level.build_f(
             X_fine[1:], V_fine[1:], dt_fine * self.sdc_fine_level.coll.nodes
         )
@@ -83,8 +87,8 @@ class transfer_class(object):
         RF_coarse_vel = self.sdc_coarse_level.coll.Q[1:, 1:] @ F_coarse
         RF_fine_pos = self.restrict(self.sdc_fine_level.coll.QQ[1:, 1:] @ F_fine)
         RF_coarse_pos = self.sdc_coarse_level.coll.QQ[1:, 1:] @ F_coarse
-        tau_pos =  ((dt_fine**2)* RF_fine_pos) - ((dt_coarse)**2*RF_coarse_pos)
-        tau_vel =  (dt_fine*RF_fine_vel - dt_coarse*RF_coarse_vel)
+        tau_pos = ((dt_fine**2) * RF_fine_pos) - ((dt_coarse) ** 2 * RF_coarse_pos)
+        tau_vel = dt_fine * RF_fine_vel - dt_coarse * RF_coarse_vel
         X_coarse = np.append(X_fine[0], X_coarse)
         V_coarse = np.append(V_fine[0], V_coarse)
         tau_pos = np.append(0.0, tau_pos)

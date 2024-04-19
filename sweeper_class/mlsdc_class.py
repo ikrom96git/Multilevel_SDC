@@ -10,20 +10,26 @@ class Mlsdc_class(transfer_class):
         super().__init__(
             problem_params, collocation_params, sweeper_params, problem_class
         )
-        self.first_order_model=len(problem_class)
+        self.first_order_model = len(problem_class)
 
     def mlsdc_sweep(self, X_old, V_old):
         tau_pos, tau_vel, X_coarse_old, V_coarse_old = self.fas_correction(X_old, V_old)
-        
+
         X_coarse, V_coarse = self.get_coarse_solver(
             X_coarse_old, V_coarse_old, tau_pos, tau_vel
         )
-        
-        if self.first_order_model==3:
-            
-            X_coarse_first, V_coarse_first= self.sdc_coarse_first_order.sdc_sweep(X_coarse_old, V_coarse_old)
-            pos_coarse=self.sdc_coarse_first_order.problem_class.asyp_expansion(X_coarse, X_coarse_first, eps=0.001)
-            vel_coarse=self.sdc_coarse_first_order.problem_class.asyp_expansion(V_coarse, V_coarse_first, eps=0.001)
+
+        if self.first_order_model == 3:
+
+            X_coarse_first, V_coarse_first = self.sdc_coarse_first_order.sdc_sweep(
+                X_coarse_old, V_coarse_old
+            )
+            pos_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
+                X_coarse, X_coarse_first, eps=0.001
+            )
+            vel_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
+                V_coarse, V_coarse_first, eps=0.001
+            )
             X_inter = X_old + self.interpolate(pos_coarse - X_coarse_old)
             V_inter = V_old + self.interpolate(vel_coarse - V_coarse_old)
         else:
@@ -67,9 +73,9 @@ class Mlsdc_class(transfer_class):
 
     def get_without_coarse(self, X, V, tau_pos, tau_vel):
         tau_pos_node_to_node = np.append(0, tau_pos[1:] - tau_pos[:-1])
-            
+
         tau_vel_node_to_node = np.append(0, tau_vel[1:] - tau_vel[:-1])
         for m in range(self.sdc_coarse_level.coll.num_nodes):
-            X[m+1]=X[m]+tau_pos_node_to_node[m+1]
-            V[m+1]=V[m]+tau_vel_node_to_node[m+1]
+            X[m + 1] = X[m] + tau_pos_node_to_node[m + 1]
+            V[m + 1] = V[m] + tau_vel_node_to_node[m + 1]
         return X, V
