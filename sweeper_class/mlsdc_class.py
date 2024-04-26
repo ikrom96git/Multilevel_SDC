@@ -30,16 +30,16 @@ class Mlsdc_class(transfer_class):
             )
 
             pos_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                X_coarse, X_coarse_first, eps=0.001
+                X_coarse, X_coarse_first, eps=0.1
             )
             vel_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                V_coarse, V_coarse_first, eps=0.001
+                V_coarse, V_coarse_first, eps=0.1
             )
             pos_coarse_expan = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                X_coarse_old, X_first_coarse_old, eps=0.001
+                X_coarse_old, X_first_coarse_old, eps=0.1
             )
             vel_coarse_expan = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                V_coarse_old, V_first_coarse_old, eps=0.001
+                V_coarse_old, V_first_coarse_old, eps=0.1
             )
             X_inter = X_old + self.interpolate(pos_coarse - pos_coarse_expan)
             V_inter = V_old + self.interpolate(vel_coarse - vel_coarse_expan)
