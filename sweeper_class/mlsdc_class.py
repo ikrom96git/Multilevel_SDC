@@ -5,10 +5,15 @@ from copy import deepcopy
 
 class Mlsdc_class(transfer_class):
     def __init__(
-        self, problem_params, collocation_params, sweeper_params, problem_class
+        self,
+        problem_params,
+        collocation_params,
+        sweeper_params,
+        problem_class,
+        eps=None,
     ):
         super().__init__(
-            problem_params, collocation_params, sweeper_params, problem_class
+            problem_params, collocation_params, sweeper_params, problem_class, eps
         )
         self.first_order_model = len(problem_class)
 
@@ -30,16 +35,16 @@ class Mlsdc_class(transfer_class):
             )
 
             pos_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                X_coarse, X_coarse_first, eps=0.1
+                X_coarse, X_coarse_first, eps=self.eps
             )
             vel_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                V_coarse, V_coarse_first, eps=0.1
+                V_coarse, V_coarse_first, eps=self.eps
             )
             pos_coarse_expan = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                X_coarse_old, X_first_coarse_old, eps=0.1
+                X_coarse_old, X_first_coarse_old, eps=self.eps
             )
             vel_coarse_expan = self.sdc_coarse_first_order.problem_class.asyp_expansion(
-                V_coarse_old, V_first_coarse_old, eps=0.1
+                V_coarse_old, V_first_coarse_old, eps=self.eps
             )
             X_inter = X_old + self.interpolate(pos_coarse - pos_coarse_expan)
             V_inter = V_old + self.interpolate(vel_coarse - vel_coarse_expan)
@@ -47,6 +52,23 @@ class Mlsdc_class(transfer_class):
             # interpolation
             X_inter = X_old + self.interpolate(X_coarse - X_coarse_old)
             V_inter = V_old + self.interpolate(V_coarse - V_coarse_old)
+        X_fine, V_fine = self.sdc_fine_level.sdc_sweep(X_inter, V_inter)
+        return X_fine, V_fine
+
+    def mlsdc_averaging_sweep0(self, X_old, V_old):
+        tau_pos, tau_vel, X_coarse_old, V_coarse_old = self.FAS_averaging(
+            X_old,
+            V_old,
+            fine_level=self.sdc_fine_level,
+            coarse_level=self.sdc_coarse_level,
+        )
+
+        X_coarse, V_coarse = self.get_coarse_solver(
+            X_coarse_old, V_coarse_old, tau_pos, tau_vel
+        )
+
+        X_inter = X_old + self.interpolate(X_coarse - X_coarse_old)
+        V_inter = V_old + self.interpolate(V_coarse - V_coarse_old)
         X_fine, V_fine = self.sdc_fine_level.sdc_sweep(X_inter, V_inter)
         return X_fine, V_fine
 
@@ -78,6 +100,21 @@ class Mlsdc_class(transfer_class):
 
         for _ in range(K_iter):
             X_new, V_new = self.mlsdc_sweep(X, V)
+            X = deepcopy(X_new)
+            V = deepcopy(V_new)
+        return X_new, V_new
+
+    def get_mlsdc_iter_averaged(self, K_iter=None, initial_guess=None):
+        if K_iter is None:
+            K_iter = self.sdc_fine_level.sweeper.Kiter
+        if initial_guess is None:
+            X = deepcopy(self.sdc_fine_level.X0)
+            V = deepcopy(self.sdc_fine_level.V0)
+        else:
+            X, V = self.sdc_fine_level.get_initial_guess(initial_guess=initial_guess)
+
+        for _ in range(K_iter):
+            X_new, V_new = self.mlsdc_averaging_sweep0(X, V)
             X = deepcopy(X_new)
             V = deepcopy(V_new)
         return X_new, V_new

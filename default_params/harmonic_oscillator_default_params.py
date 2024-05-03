@@ -15,7 +15,7 @@ def get_harmonic_oscillator_default_params(Force="Fast_time"):
         time = np.linspace(0, 30, 1000)
     elif Force == "Fast_time":
 
-        eps = 0.001
+        eps = 0.1
         kappa_hat = 0.8
         problem_params = dict()
         problem_params["mu"] = kappa_hat
@@ -26,7 +26,7 @@ def get_harmonic_oscillator_default_params(Force="Fast_time"):
         problem_params["dt"] = 0.1
         time = np.linspace(0, 30, 1000)
     else:
-        print("0")
+        eps = None
         problem_params = dict()
         problem_params["mu"] = 0
         problem_params["kappa"] = 2
@@ -35,4 +35,4 @@ def get_harmonic_oscillator_default_params(Force="Fast_time"):
         problem_params["u0"] = np.array([2, 0])
         problem_params["dt"] = 0.5
         time = np.linspace(0, 6, 1000)
-    return problem_params, time
+    return problem_params, time, eps
