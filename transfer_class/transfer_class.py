@@ -9,7 +9,7 @@ class transfer_class(object):
         self, problem_params, collocation_params, sweeper_params, problem_class, eps
     ):
         if eps is None:
-            self.eps = 0.1
+            self.eps = 0.001
         else:
             self.eps = eps
         self.get_sorted_params(
@@ -121,6 +121,7 @@ class transfer_class(object):
 
     def reconstruction(self, U):
         return np.append(U[0], self.Paverage @ U[1:])
+    
 
     def averaging(self, X_fine, V_fine, fine_level=None, coarse_level=None):
         if fine_level is None:
@@ -149,15 +150,61 @@ class transfer_class(object):
         tau_vel = np.append(0.0, tau_vel)
         return tau_pos, tau_vel, X_coarse, V_coarse
 
-    def averaging_over_time(self, U, level=None):
-        return level.coll.weights @ U
+    def averaging_over_time_vel(self, U, level=None):
+        return (level.coll.weights @ U)
+    
+    def averaging_over_time_pos(self, U, level=None):
+        return level.coll.weights@U
 
-    def averaging_first_order(self, U, level=None):
-        return (1 / self.eps) * (U - self.averaging_over_time(U, level=level))
+    def averaging_first_order(self, U, U_averaged):
+        return  (1/np.sqrt(self.eps))*(U - U_averaged)
+    
+    def FAS_averaging_first_order(self, X_fine, V_fine, fine_level=None, coarse_level=None, coarse_level_first=None):
+        X_averag = self.averaging_over_time_pos(X_fine[1:], level=fine_level)
+        V_averag = self.averaging_over_time_vel(V_fine[1:], level=fine_level)
+        X_zeros=X_averag*np.ones(fine_level.coll.num_nodes)
+        V_zeros=V_averag*np.ones(fine_level.coll.num_nodes)
+        X_first=self.averaging_first_order(X_fine[1:], X_zeros)
+        V_first=self.averaging_first_order(V_fine[1:], V_zeros)
+        dt_fine=fine_level.prob.dt
+        dt_zeros=coarse_level.prob.dt
+        dt_first=coarse_level_first.prob.dt
+        F_fine = fine_level.build_f(
+            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
+        )
+        F_zeros = coarse_level.build_f(
+            X_zeros, V_zeros, dt_zeros * coarse_level.coll.nodes
+        )
+        F_first=coarse_level_first.build_f(X_first, V_first, dt_first*coarse_level_first.coll.num_nodes)
+        QF_fine_pos=(dt_fine**2)*fine_level.coll.QQ[1:,1:]@F_fine
+        QF_fine_vel=dt_fine*fine_level.coll.Q[1:,1:]@F_fine
+        RF_averaging_zeros_pos=self.averaging_over_time_pos(QF_fine_pos, level=fine_level)
+        RF_averaging_zeros_vel=self.averaging_over_time_vel(QF_fine_vel, level=fine_level)
+        RF_averaging_zeros_pos=RF_averaging_zeros_pos*np.ones(coarse_level.coll.num_nodes)
+        RF_averaging_zeros_vel=RF_averaging_zeros_vel*np.ones(coarse_level.coll.num_nodes)
+        RF_averaging_first_pos=self.averaging_first_order(QF_fine_pos, RF_averaging_zeros_pos)
+        RF_averaging_first_vel=self.averaging_first_order(QF_fine_vel, RF_averaging_zeros_vel)
 
+        RC_averaging_zeros_pos=(dt_zeros**2)*coarse_level.coll.QQ[1:,1:]@F_zeros
+        RC_averaging_zeros_vel=dt_zeros*coarse_level.coll.Q[1:,1:]@F_zeros
+        RC_averaging_first_pos=(dt_first**2)*coarse_level_first.coll.QQ[1:,1:]@F_first
+        RC_averaging_first_vel=dt_first*coarse_level_first.coll.Q[1:,1:]@F_first
+        
+        tau_pos_zeros=np.append(0, RF_averaging_zeros_pos-RC_averaging_zeros_pos)
+        tau_vel_zeros=np.append(0, RF_averaging_zeros_vel-RC_averaging_zeros_vel)
+        tau_pos_first=np.append(0, RF_averaging_first_pos-RC_averaging_first_pos)
+        tau_vel_first=np.append(0, RF_averaging_first_vel-RC_averaging_first_vel)
+        X_zeros=np.append(X_fine[0], X_zeros)
+        V_zeros=np.append(V_fine[0], V_zeros)
+        X_first=np.append(0.0, X_first)
+        V_first=np.append(0.0, V_first)
+
+        return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first, X_zeros, V_zeros, X_first, V_first
+
+    
     def FAS_averaging(self, X_fine, V_fine, fine_level=None, coarse_level=None):
-        X_averag = self.averaging_over_time(X_fine[1:], level=fine_level)
-        V_averag = self.averaging_over_time(V_fine[1:], level=fine_level)
+        X_averag = self.averaging_over_time_pos(X_fine[1:], level=fine_level)
+        V_averag = self.averaging_over_time_vel(V_fine[1:], level=fine_level)
         X_coarse = X_averag * np.ones(coarse_level.coll.num_nodes)
         V_coarse = V_averag * np.ones(coarse_level.coll.num_nodes)
         dt_fine = fine_level.prob.dt
@@ -168,12 +215,12 @@ class transfer_class(object):
         F_coarse = coarse_level.build_f(
             X_coarse, V_coarse, dt_coarse * coarse_level.coll.nodes
         )
-        RF_fine_vel_average = self.averaging_over_time(
+        RF_fine_vel_average = self.averaging_over_time_vel(
             fine_level.coll.Q[1:, 1:] @ F_fine, level=fine_level
         )
         RF_fine_vel = RF_fine_vel_average * np.ones(coarse_level.coll.num_nodes)
         RF_coarse_vel = coarse_level.coll.Q[1:, 1:] @ F_coarse
-        RF_fine_pos_average = self.averaging_over_time(
+        RF_fine_pos_average = self.averaging_over_time_pos(
             fine_level.coll.QQ[1:, 1:] @ F_fine, level=fine_level
         )
         RF_fine_pos = RF_fine_pos_average * np.ones(coarse_level.coll.num_nodes)

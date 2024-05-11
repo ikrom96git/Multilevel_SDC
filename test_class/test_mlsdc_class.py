@@ -32,16 +32,24 @@ def test_residual(Force=False):
     problem_params, collocation_params, sweeper_params, problem_class = (
         get_mlsdc_default_params(Force=Force)
     )
-    sweeper_params["initial_guess"] = "collocation"
+    sweeper_params["initial_guess"] = "spread"
     mlsdc_model = Mlsdc_class(
         problem_params, collocation_params, sweeper_params, problem_class
     )
+    problem_params_sdc, collocation_params_sdc,sweeper_params_sdc,problem_class_sdc, = get_sdc_default_params(Force=Force)
+    model_sdc = sdc_class(
+            problem_params_sdc,
+            collocation_params_sdc,
+            sweeper_params_sdc,
+            problem_class_sdc)
+    X_sdc, V_sdc = model_sdc.sdc_iter()
+    Residual_sdc=model_sdc.get_residual
     X, V = mlsdc_model.get_mlsdc_iter_solution()
     Residual_mlsdc = mlsdc_model.sdc_fine_level.get_residual
     Kiter = np.arange(1, 10 + 1, 1)
-    Title = "Residual"
-    label_set = ["Position residual", "Velocity residual"]
-    residual_set = [np.array(Residual_mlsdc)[:, 0], np.array(Residual_mlsdc)[:, 1]]
+    Title = "Residual velocity"
+    label_set = ["MLSDC", "SDC"]
+    residual_set = [np.array(Residual_mlsdc)[:, 1], np.array(Residual_sdc)[:, 1]]
     plot_residual(Kiter, residual_set, Title, label_set)
 
 
@@ -91,5 +99,5 @@ def test_mlsdc_vs_sdc_solution(Force=False):
 
 if __name__ == "__main__":
     # test_solution()
-    test_residual(Force=True)
+    test_residual(Force='Fast_time')
     # test_mlsdc_vs_sdc_solution()
