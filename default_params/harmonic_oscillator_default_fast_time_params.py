@@ -14,7 +14,7 @@ def get_harmonic_oscillator_fast_time_params(Fast_time=False):
         problem_params["u0"] = [2, 0]
         problem_params["dt"] = 0.1 / np.sqrt(eps)
         problem_params["F0"] = 1.0
-        time = np.linspace(0, 6, 1000)
+        time = np.linspace(0, 1, 1000)
         time = time / np.sqrt(eps)
     else:
         problem_params["F0"] = 0.0

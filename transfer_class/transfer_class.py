@@ -2,7 +2,7 @@ import numpy as np
 from sweeper_class.sdc_class import sdc_class
 from copy import deepcopy
 from core.Lagrange import LagrangeApproximation
-
+from scipy.optimize import minimize
 
 class transfer_class(object):
     def __init__(
@@ -176,8 +176,8 @@ class transfer_class(object):
             X_zeros, V_zeros, dt_zeros * coarse_level.coll.nodes
         )
         F_first=coarse_level_first.build_f(X_first, V_first, dt_first*coarse_level_first.coll.num_nodes)
-        QF_fine_pos=(dt_fine**2)*fine_level.coll.QQ[1:,1:]@F_fine
-        QF_fine_vel=dt_fine*fine_level.coll.Q[1:,1:]@F_fine
+        QF_fine_pos=fine_level.coll.QQ[1:,1:]@F_fine
+        QF_fine_vel=fine_level.coll.Q[1:,1:]@F_fine
         RF_averaging_zeros_pos=self.averaging_over_time_pos(QF_fine_pos, level=fine_level)
         RF_averaging_zeros_vel=self.averaging_over_time_vel(QF_fine_vel, level=fine_level)
         RF_averaging_zeros_pos=RF_averaging_zeros_pos*np.ones(coarse_level.coll.num_nodes)
@@ -190,10 +190,10 @@ class transfer_class(object):
         RC_averaging_first_pos=(dt_first**2)*coarse_level_first.coll.QQ[1:,1:]@F_first
         RC_averaging_first_vel=dt_first*coarse_level_first.coll.Q[1:,1:]@F_first
         
-        tau_pos_zeros=np.append(0, RF_averaging_zeros_pos-RC_averaging_zeros_pos)
-        tau_vel_zeros=np.append(0, RF_averaging_zeros_vel-RC_averaging_zeros_vel)
-        tau_pos_first=np.append(0, RF_averaging_first_pos-RC_averaging_first_pos)
-        tau_vel_first=np.append(0, RF_averaging_first_vel-RC_averaging_first_vel)
+        tau_pos_zeros=np.append(0,dt_fine**2* RF_averaging_zeros_pos-RC_averaging_zeros_pos)
+        tau_vel_zeros=np.append(0, dt_fine*RF_averaging_zeros_vel-RC_averaging_zeros_vel)
+        tau_pos_first=np.append(0, dt_fine**2*RF_averaging_first_pos-RC_averaging_first_pos)
+        tau_vel_first=np.append(0, dt_fine* RF_averaging_first_vel-RC_averaging_first_vel)
         X_zeros=np.append(X_fine[0], X_zeros)
         V_zeros=np.append(V_fine[0], V_zeros)
         X_first=np.append(0.0, X_first)
@@ -232,3 +232,108 @@ class transfer_class(object):
         tau_pos = np.append(0.0, tau_pos)
         tau_vel = np.append(0.0, tau_vel)
         return tau_pos, tau_vel, X_coarse, V_coarse
+
+    def arg_min_function(self, y, y_star, num_nodes):
+        if len(y_star)==num_nodes:
+            func=np.linalg.norm(y-y_star)**2
+        else:
+            func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+np.linalg.norm(np.sqrt(self.eps)*(y[num_nodes:]-y_star[num_nodes:]))**2
+        return func
+
+    def arg_min(self, U, y_star, num_nodes):
+        if len(y_star)==num_nodes:
+            cons=({'type':'eq', 'fun': lambda y: y-U})
+            y0=np.ones(len(U))*U[0]
+        else:
+            cons=({'type':'eq', 'fun': lambda y: y[0:num_nodes]+np.sqrt(self.eps)*y[num_nodes:]-U})
+            y0=np.block([np.ones(len(U))*U[0], np.zeros(len(U))])
+        res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes), constraints=cons)
+        print(res.message)
+        return res.x
+
+    def FAS_with_arg_min(self, X_fine, V_fine, fine_level=None, coarse_level=None):
+        if fine_level is None:
+            fine_level = self.sdc_fine_level
+        if coarse_level is None:
+            coarse_level = self.sdc_coarse_level
+        X_star=np.ones(fine_level.coll.num_nodes)*X_fine[0]
+        V_star=np.ones(fine_level.coll.num_nodes)*V_fine[0]
+        X_coarse=self.arg_min(X_fine[1:], X_star, fine_level.coll.num_nodes)
+        V_coarse=self.arg_min(V_fine[1:], V_star, fine_level.coll.num_nodes)
+        dt_fine = fine_level.prob.dt
+        dt_coarse = coarse_level.prob.dt
+        F_fine = fine_level.build_f(
+            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
+        )
+        F_coarse = coarse_level.build_f(
+            X_coarse, V_coarse, dt_coarse * coarse_level.coll.nodes
+        )
+        RF_coarse_vel = coarse_level.coll.Q[1:, 1:] @ F_coarse
+        RF_fine_vel = self.arg_min(fine_level.coll.Q[1:, 1:] @ F_fine, RF_coarse_vel, coarse_level.coll.num_nodes)
+        RF_coarse_pos = coarse_level.coll.QQ[1:, 1:] @ F_coarse
+        RF_fine_pos = self.arg_min(fine_level.coll.QQ[1:, 1:] @ F_fine, RF_coarse_pos, coarse_level.coll.num_nodes)
+        
+        tau_vel=dt_fine*RF_fine_vel-dt_coarse*RF_coarse_vel
+        tau_pos=(dt_fine**2)*RF_fine_pos-(dt_coarse**2)*RF_coarse_pos
+        X_coarse=np.append(X_fine[0], X_coarse)
+        V_coarse=np.append(V_fine[0], V_coarse)
+        tau_pos=np.append(0.0, tau_pos)
+        tau_vel=np.append(0.0, tau_vel)
+        return tau_pos, tau_vel, X_coarse, V_coarse
+    
+    def FAS_with_arg_min_first_order(self, X_fine, V_fine, fine_level=None, coarse_level=None, coarse_level_first=None):
+        if fine_level is None:
+            fine_level = self.sdc_fine_level
+        if coarse_level is None:
+            coarse_level = self.sdc_coarse_level
+        if coarse_level_first is None:
+            coarse_level_first = self.sdc_coarse_first_order
+        X_star=np.block([np.ones(fine_level.coll.num_nodes)*X_fine[0], np.zeros(fine_level.coll.num_nodes)])
+        V_star=np.block([np.ones(fine_level.coll.num_nodes)*V_fine[0], np.zeros(fine_level.coll.num_nodes)])
+        X_coarse=self.arg_min(X_fine[1:], X_star, fine_level.coll.num_nodes)
+        V_coarse=self.arg_min(V_fine[1:], V_star, fine_level.coll.num_nodes)
+        X_zeros, X_first=np.split(X_coarse, 2)
+        V_zeros, V_first=np.split(V_coarse, 2)
+        dt_fine = fine_level.prob.dt
+        dt_zeros = coarse_level.prob.dt
+        dt_first=coarse_level_first.prob.dt
+        F_fine = fine_level.build_f(
+            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
+        )
+        F_zeros = coarse_level.build_f(
+            X_zeros, V_zeros, dt_zeros * coarse_level.coll.nodes
+        )
+        F_first=coarse_level_first.build_f(X_first, V_first, dt_first*coarse_level_first.coll.num_nodes)
+        QF_fine_pos=fine_level.coll.QQ[1:,1:]@F_fine
+        QF_fine_vel=fine_level.coll.Q[1:,1:]@F_fine
+        RF_zeros_vel = coarse_level.coll.Q[1:, 1:] @ F_zeros
+        RF_zeros_pos = coarse_level.coll.QQ[1:, 1:] @ F_zeros
+        RF_first_vel = coarse_level_first.coll.Q[1:, 1:] @ F_first
+        RF_first_pos = coarse_level_first.coll.QQ[1:, 1:] @ F_first
+        RF_star_pos=np.block([RF_zeros_pos, RF_first_pos])
+        RF_star_vel=np.block([RF_zeros_vel, RF_first_vel])
+        RF_fine_pos=self.arg_min(QF_fine_pos, RF_star_pos, coarse_level.coll.num_nodes)
+        RF_fine_vel=self.arg_min(QF_fine_vel, RF_star_vel, coarse_level.coll.num_nodes)
+        RF_zeros_pos_first, RF_first_pos_first=np.split(RF_fine_pos, 2)
+        RF_zeros_vel_first, RF_first_vel_first=np.split(RF_fine_vel, 2)
+        tau_zeros_pos=(dt_fine**2)*RF_zeros_pos_first-(dt_zeros**2)*RF_zeros_pos
+        tau_zeros_vel=dt_fine*RF_zeros_vel_first-dt_zeros*RF_zeros_vel
+        tau_first_pos=(dt_fine**2)*RF_first_pos_first-(dt_first**2)*RF_first_pos
+        tau_first_vel=dt_fine*RF_first_vel_first-dt_first*RF_first_vel
+        X_zeros=np.append(X_fine[0], X_zeros)
+        V_zeros=np.append(V_fine[0], V_zeros)
+        X_first=np.append(0.0, X_first)
+        V_first=np.append(0.0, V_first)
+        tau_zeros_pos=np.append(0.0, tau_zeros_pos)
+        tau_zeros_vel=np.append(0.0, tau_zeros_vel)
+        tau_first_pos=np.append(0.0, tau_first_pos)
+        tau_first_vel=np.append(0.0, tau_first_vel)
+        return tau_zeros_pos, tau_zeros_vel, tau_first_pos, tau_first_vel, X_zeros, V_zeros, X_first, V_first
+
+
+
+
+
+
+
+

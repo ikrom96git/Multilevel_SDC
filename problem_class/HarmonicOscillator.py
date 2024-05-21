@@ -150,7 +150,7 @@ class HarmonicOscillator:
             Bp = 0.0
         else:
             raise (ValueError("Check get_constForce"))
-
+        
         return Ap, Bp, c_omega
 
     def get_forceTerm(self, t, F0, omega_force):

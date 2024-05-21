@@ -123,5 +123,5 @@ def test_mlsdc_first_averaging():
     ]
     plot_residual(Kiter, residual_set, Title, label_set)
 if __name__ == "__main__":
-    test_mlsdc_zeros_averaging()
-    # test_mlsdc_first_averaging()
+    # test_mlsdc_zeros_averaging()
+    test_mlsdc_first_averaging()

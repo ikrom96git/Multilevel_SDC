@@ -131,6 +131,33 @@ def test_fast_time_first_order_model():
 
     plot_solution(time_reduced, solution_set, Title, label_set)
 
+def test_fast_time_solution_models():
+
+    prob_reduced_model_params, time_reduced = (
+        get_harmonic_oscillator_reduced_model_params()
+    )
+    prob_fast_time_params, time_fast = get_harmonic_oscillator_fast_time_params(
+        Fast_time=True
+    )
+    prob_fast_time_first_params, time_fast = get_harmonic_oscillator_fast_time_params(
+        Fast_time=True
+    )
+    prob_fast_time_first_params["u0"] = [0, 0]
+
+    model_reduced = HarmonicOscillator(prob_reduced_model_params)
+    model_fast_time = HarmonicOscillator_fast_time(prob_fast_time_params)
+    model_first_order = HarmonicOscillator_fast_time_first_order(prob_fast_time_first_params)
+    solution_reduced = model_reduced.get_solution_ntimeWithForce(time_reduced)
+    solution_fast = model_fast_time.get_ntime_exact_solution(time_fast)
+    solution_first = model_first_order.get_ntime_exact_solution(time_fast)
+    position = model_first_order.asyp_expansion(
+        solution_fast[0, :], solution_first[0, :], eps=0.1
+    )
+    Title = "Solution of Fast time"
+    label_set = ["Exact solution", "zeros order",  'asyp expansion']
+    solution_set = [solution_reduced[0, :], solution_fast[0, :], position]
+
+    plot_solution(time_reduced, solution_set, Title, label_set)
 
 def test_fast_time_first_order_sdc():
     K = 20
@@ -158,10 +185,10 @@ def test_fast_time_first_order_sdc():
     pos_solution, vel_solution = model_sdc.sdc_iter(K)
     time = np.append(0, model_sdc.coll.nodes)
     pos_first = model_sdc_first_order.problem_class.asyp_expansion(
-        pos_solution, pos_fist_order, eps=0.001
+        pos_solution, pos_fist_order, eps=0.00001
     )
     vel_first = model_sdc_first_order.problem_class.asyp_expansion(
-        vel_solution, vel_first_order, eps=0.001
+        vel_solution, vel_first_order, eps=0.00001
     )
     Title = "Solution"
     label_set = ["$0^{th}$ order expansion", "$1^{st}$ order expansion"]
@@ -170,9 +197,10 @@ def test_fast_time_first_order_sdc():
 
 
 if __name__ == "__main__":
-    # test_compare_solution_fast_time_reduced()
+    test_compare_solution_fast_time_reduced()
     # test_compare_solution_slow_time_reduced()
     # test_fast_time_SDC()
     # test_residual_fast_time()
     # test_fast_time_first_order_model()
-    test_fast_time_first_order_sdc()
+    # test_fast_time_solution_models()
+    # test_fast_time_first_order_sdc()

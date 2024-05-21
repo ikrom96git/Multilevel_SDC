@@ -64,7 +64,7 @@ class HarmonicOscillator_fast_time_first_order(object):
     def get_exact_solution(self, t):
         dy0, dy1 = self.get_dy0(t)
         a1, b1 = self.get_dy0(self.params.t0)
-        b1 = 2 + b1
+        b1 = b1
         dy = a1 * np.sin(t) + b1 * np.cos(t) - dy0
         dv = a1 * np.cos(t) - b1 * np.sin(t) - dy1
         return np.array([dy, dv])
@@ -74,3 +74,5 @@ class HarmonicOscillator_fast_time_first_order(object):
         for tt in range(len(time)):
             solution[:, tt] = self.get_exact_solution(time[tt])
         return solution
+    
+    

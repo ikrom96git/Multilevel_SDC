@@ -21,11 +21,11 @@ def get_mlsdc_default_params(Force=False):
     problem_params, *_ = get_harmonic_oscillator_default_params(Force=Force)
     collocation_params = dict()
     collocation_params["quad_type"] = "GAUSS"
-    collocation_params["num_nodes"] = [5, 3]
+    collocation_params["num_nodes"] = [5, 5]
     sweeper_params = dict()
     sweeper_params["Kiter"] = 10
     sweeper_params["coarse_solver"] = "sdc"
-    sweeper_params["initial_guess"] = "spread"
+    sweeper_params["initial_guess"] = "collocation"
     problem_class = [HarmonicOscillator, HarmonicOscillator]
     return problem_params, collocation_params, sweeper_params, problem_class
 
