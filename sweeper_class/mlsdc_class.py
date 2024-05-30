@@ -86,8 +86,7 @@ class Mlsdc_class(transfer_class):
                 )
             )
             X_coarse_zeros, V_coarse_zeros=self.sdc_coarse_level.sdc_sweep(X_zeros_coarse_old, V_zeros_coarse_old, tau_pos=tau_zeros_pos, tau_vel=tau_zeros_vel)
-            X_coarse_first, V_coarse_first = self.sdc_coarse_first_order.sdc_sweep(
-                X_first_coarse_old, V_first_coarse_old, tau_pos=tau_first_pos, tau_vel=tau_first_vel)
+            X_coarse_first, V_coarse_first = self.get_coarse_solver(X_first_coarse_old, V_first_coarse_old, tau_first_pos, tau_first_vel, coarse_solver='no_coarse')
             # X_coarse_first=X_coarse_first*0.0
             # V_coarse_first=V_coarse_first*0.0
             # X_first_coarse_old=X_first_coarse_old*0.0
@@ -159,13 +158,16 @@ class Mlsdc_class(transfer_class):
         X_fine, V_fine = self.sdc_fine_level.sdc_sweep(X_inter, V_inter)
         return X_fine, V_fine
 
-    def get_coarse_solver(self, X_coarse_old, V_coarse_old, tau_pos, tau_vel):
-        coarse_solver = self.sdc_coarse_level.sweeper.coarse_solver
+    def get_coarse_solver(self, X_coarse_old, V_coarse_old, tau_pos, tau_vel, coarse_solver=None):
+        if coarse_solver is None:    
+            coarse_solver = self.sdc_coarse_level.sweeper.coarse_solver
+        
         if coarse_solver == "sdc":
             X_coarse, V_coarse = self.sdc_coarse_level.sdc_sweep(
                 X_coarse_old, V_coarse_old, tau_pos=tau_pos, tau_vel=tau_vel
             )
         elif coarse_solver == "no_coarse":
+            print(coarse_solver)
             X_coarse, V_coarse = self.get_without_coarse(
                 X_coarse_old, V_coarse_old, tau_pos, tau_vel
             )
