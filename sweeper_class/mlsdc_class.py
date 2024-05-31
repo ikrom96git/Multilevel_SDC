@@ -114,6 +114,20 @@ class Mlsdc_class(transfer_class):
         X_fine, V_fine = self.sdc_fine_level.sdc_sweep(X_inter, V_inter)
         return X_fine, V_fine
 
+    def mlsdc_asymp_model(self, X_old, V_old):
+        X_zeros, V_zeros, X_first, V_first=self.restriction_operator(X_old, V_old)
+        tau_zeros_pos, tau_zeros_vel, tau_first_pos, tau_first_vel=self.fas_asyp_model(X_old, V_old, fine_level=self.sdc_fine_level, coarse_zeros_level=self.sdc_coarse_level, coarse_first_order=self.sdc_coarse_first_order)
+        pos_zeros, vel_zeros=self.sdc_coarse_level.sdc_sweep(X_zeros, V_zeros, tau_pos=tau_zeros_pos, tau_vel=tau_zeros_vel)
+        pos_first, vel_first=self.sdc_coarse_first_order.sdc_sweep(X_first, V_first, tau_pos=tau_first_pos, tau_vel=tau_first_vel)
+        pos_fine=self.sdc_coarse_first_order.problem_class.asyp_expansion(X_zeros, X_first, eps=self.eps)
+        vel_fine=self.sdc_coarse_first_order.problem_class.asyp_expansion(V_zeros, V_first, eps=self.eps)
+        pos_coarse=self.sdc_coarse_first_order.problem_class.asyp_expansion(pos_zeros, pos_first, eps=self.eps)
+        vel_coarse=self.sdc_coarse_first_order.problem_class.asyp_expansion(vel_zeros, vel_first, eps=self.eps)
+        X_inter=X_old+self.interpolate(pos_fine-pos_coarse)
+        V_inter=V_old+self.interpolate(vel_fine-vel_coarse)
+        X_fine, V_fine=self.sdc_fine_level.sdc_sweep(X_inter, V_inter)
+        return X_fine,  V_fine
+
     def mlsdc_arg_min_sweep(self, X_old, V_old):
         tau_pos, tau_vel, X_coarse_old, V_coarse_old = self.FAS_with_arg_min(
             X_old,
@@ -233,6 +247,21 @@ class Mlsdc_class(transfer_class):
 
         for _ in range(K_iter):
             X_new, V_new = self.mlsdc_averaging_sweep1(X, V)
+            X = deepcopy(X_new)
+            V = deepcopy(V_new)
+        return X_new, V_new
+    
+    def get_mlsdc_iter_asyp_expan(self, K_iter=None, initial_guess=None):
+        if K_iter is None:
+            K_iter = self.sdc_fine_level.sweeper.Kiter
+        if initial_guess is None:
+            X = deepcopy(self.sdc_fine_level.X0)
+            V = deepcopy(self.sdc_fine_level.V0)
+        else:
+            X, V = self.sdc_fine_level.get_initial_guess(initial_guess=initial_guess)
+
+        for _ in range(K_iter):
+            X_new, V_new = self.mlsdc_asymp_model(X, V)
             X = deepcopy(X_new)
             V = deepcopy(V_new)
         return X_new, V_new

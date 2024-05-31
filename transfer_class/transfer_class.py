@@ -116,39 +116,36 @@ class transfer_class(object):
         tau_vel = np.append(0.0, tau_vel)
         return tau_pos, tau_vel, X_coarse, V_coarse
 
-    def compression(self, U):
-        return self.Raverage @ U
+    def fas_asyp_model(self, X_fine, V_fine, fine_level=None, coarse_zeros_level=None, coarse_first_order=None):
+        RX_zeros_order, RV_zeros_order, RX_first_order, RV_first_order=self.restriction_operator(X_fine, V_fine)
+        
+        Rfine_pos, Rfine_vel=fine_level.collocation_operator(X_fine, V_fine)
 
-    def reconstruction(self, U):
-        return np.append(U[0], self.Paverage @ U[1:])
+        Rcoarse_zeros_pos, Rcoarse_zeros_vel=coarse_zeros_level.collocation_operator(RX_zeros_order, RV_zeros_order)
+        
+        V0first_order=0.0*RV_first_order
+        Rcoarse_first_pos, Rcoarse_first_vel=coarse_first_order.collocation_operator(RX_first_order, RV_first_order, V0=V0first_order)
+        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.restriction_operator(Rfine_pos, Rfine_vel)
+        tau_pos_zeros=Rcoarse_zeros_pos-Rfine_zeros_pos
+        tau_vel_zeros=Rcoarse_zeros_vel-Rfine_zeros_vel
+        tau_pos_first=Rcoarse_first_pos-Rfine_first_pos
+        tau_vel_first=Rcoarse_first_vel-Rfine_first_vel
+        return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first
+
     
+    def restriction_operator(self, X_fine, V_fine):
+        RX_zeros_averaged=self.averaging_over_time_pos(X_fine[1:], level=self.sdc_fine_level)
+        RV_zeros_averaged=self.averaging_over_time_vel(V_fine[1:], level=self.sdc_fine_level)
+        RX_zeros_order=np.ones(len(X_fine[1:]))*RX_zeros_averaged
+        RV_zeros_order=np.ones(len(V_fine[1:]))*RV_zeros_averaged
+        RX_first_order=self.averaging_first_order(X_fine[1:], RX_zeros_order)
+        RV_first_order=self.averaging_first_order(V_fine[1:], RV_zeros_order)
+        RX_zeros_order=np.append(X_fine[0], RX_zeros_order)
+        RV_zeros_order=np.append(V_fine[0], RV_zeros_order)
+        RX_first_order=np.append(0.0, RX_first_order)
+        RV_first_order=np.append(0.0, RV_first_order)
+        return RX_zeros_order, RV_zeros_order, RX_first_order, RV_first_order
 
-    def averaging(self, X_fine, V_fine, fine_level=None, coarse_level=None):
-        if fine_level is None:
-            fine_level = self.sdc_fine_level
-        if coarse_level is None:
-            coarse_level = self.sdc_coarse_level
-        X_coarse = self.compression(X_fine[1:])
-        V_coarse = self.compression(V_fine[1:])
-        dt_fine = fine_level.prob.dt
-        dt_coarse = coarse_level.prob.dt
-        F_fine = fine_level.build_f(
-            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
-        )
-        F_coarse = coarse_level.build_f(
-            X_coarse, V_coarse, dt_coarse * coarse_level.coll.nodes
-        )
-        RF_fine_vel = self.compression(fine_level.coll.Q[1:, 1:] @ F_fine)
-        RF_coarse_vel = coarse_level.coll.Q[1:, 1:] @ F_coarse
-        RF_fine_pos = self.compression(fine_level.coll.QQ[1:, 1:] @ F_fine)
-        RF_coarse_pos = coarse_level.coll.QQ[1:, 1:] @ F_coarse
-        tau_pos = ((dt_fine**2) * RF_fine_pos) - ((dt_coarse) ** 2 * RF_coarse_pos)
-        tau_vel = dt_fine * RF_fine_vel - dt_coarse * RF_coarse_vel
-        X_coarse = np.append(X_fine[0], X_coarse)
-        V_coarse = np.append(V_fine[0], V_coarse)
-        tau_pos = np.append(0.0, tau_pos)
-        tau_vel = np.append(0.0, tau_vel)
-        return tau_pos, tau_vel, X_coarse, V_coarse
 
     def averaging_over_time_vel(self, U, level=None):
         return (level.coll.weights @ U)
@@ -159,47 +156,6 @@ class transfer_class(object):
     def averaging_first_order(self, U, U_averaged):
         return  (1/np.sqrt(self.eps))*(U - U_averaged)
     
-    def FAS_averaging_first_order(self, X_fine, V_fine, fine_level=None, coarse_level=None, coarse_level_first=None):
-        X_averag = self.averaging_over_time_pos(X_fine[1:], level=fine_level)
-        V_averag = self.averaging_over_time_vel(V_fine[1:], level=fine_level)
-        X_zeros=X_averag*np.ones(fine_level.coll.num_nodes)
-        V_zeros=V_averag*np.ones(fine_level.coll.num_nodes)
-        X_first=self.averaging_first_order(X_fine[1:], X_zeros)
-        V_first=self.averaging_first_order(V_fine[1:], V_zeros)
-        dt_fine=fine_level.prob.dt
-        dt_zeros=coarse_level.prob.dt
-        dt_first=coarse_level_first.prob.dt
-        F_fine = fine_level.build_f(
-            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
-        )
-        F_zeros = coarse_level.build_f(
-            X_zeros, V_zeros, dt_zeros * coarse_level.coll.nodes
-        )
-        F_first=coarse_level_first.build_f(X_first, V_first, dt_first*coarse_level_first.coll.num_nodes)
-        QF_fine_pos=fine_level.coll.QQ[1:,1:]@F_fine
-        QF_fine_vel=fine_level.coll.Q[1:,1:]@F_fine
-        RF_averaging_zeros_pos=self.averaging_over_time_pos(QF_fine_pos, level=fine_level)
-        RF_averaging_zeros_vel=self.averaging_over_time_vel(QF_fine_vel, level=fine_level)
-        RF_averaging_zeros_pos=RF_averaging_zeros_pos*np.ones(coarse_level.coll.num_nodes)
-        RF_averaging_zeros_vel=RF_averaging_zeros_vel*np.ones(coarse_level.coll.num_nodes)
-        RF_averaging_first_pos=self.averaging_first_order(QF_fine_pos, RF_averaging_zeros_pos)
-        RF_averaging_first_vel=self.averaging_first_order(QF_fine_vel, RF_averaging_zeros_vel)
-
-        RC_averaging_zeros_pos=(dt_zeros**2)*coarse_level.coll.QQ[1:,1:]@F_zeros
-        RC_averaging_zeros_vel=dt_zeros*coarse_level.coll.Q[1:,1:]@F_zeros
-        RC_averaging_first_pos=(dt_first**2)*coarse_level_first.coll.QQ[1:,1:]@F_first
-        RC_averaging_first_vel=dt_first*coarse_level_first.coll.Q[1:,1:]@F_first
-        
-        tau_pos_zeros=np.append(0,dt_fine**2* RF_averaging_zeros_pos-RC_averaging_zeros_pos)
-        tau_vel_zeros=np.append(0, dt_fine*RF_averaging_zeros_vel-RC_averaging_zeros_vel)
-        tau_pos_first=np.append(0, dt_fine**2*RF_averaging_first_pos-RC_averaging_first_pos)
-        tau_vel_first=np.append(0, dt_fine* RF_averaging_first_vel-RC_averaging_first_vel)
-        X_zeros=np.append(X_fine[0], X_zeros)
-        V_zeros=np.append(V_fine[0], V_zeros)
-        X_first=np.append(0.0, X_first)
-        V_first=np.append(0.0, V_first)
-
-        return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first, X_zeros, V_zeros, X_first, V_first
 
     
     def FAS_averaging(self, X_fine, V_fine, fine_level=None, coarse_level=None):
@@ -250,6 +206,10 @@ class transfer_class(object):
         res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes), constraints=cons)
         print(res.message)
         return res.x
+    
+    def fast_min_operator(self, X_fine, V_fine, fine_level=None, coarse_zero_order=None, coarse_first_order=None):
+        
+
 
     def FAS_with_arg_min(self, X_fine, V_fine, fine_level=None, coarse_level=None):
         if fine_level is None:
@@ -329,6 +289,9 @@ class transfer_class(object):
         tau_first_pos=np.append(0.0, tau_first_pos)
         tau_first_vel=np.append(0.0, tau_first_vel)
         return tau_zeros_pos, tau_zeros_vel, tau_first_pos, tau_first_vel, X_zeros, V_zeros, X_first, V_first
+    
+    
+
 
 
 

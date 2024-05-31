@@ -106,7 +106,7 @@ def test_mlsdc_first_averaging():
     model_mlsdc.get_mlsdc_iter_solution()
     model_averaged_mlsdc.get_mlsdc_iter_averaged()
     model_reduced_mlsdc.get_mlsdc_iter_solution()
-    model_averaged_first_order_mlsdc.get_mlsdc_iter_averaged()
+    model_averaged_first_order_mlsdc.get_mlsdc_iter_asyp_expan()
     Residual_mlsdc = model_mlsdc.sdc_fine_level.get_residual
     Residual_reduced = model_reduced_mlsdc.sdc_fine_level.get_residual
     Residual_averaged_zeros = model_averaged_mlsdc.sdc_fine_level.get_residual

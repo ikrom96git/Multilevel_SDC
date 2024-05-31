@@ -17,6 +17,16 @@ class sdc_class(object):
         self.get_residual = []
         self.get_rhs = self.problem_class.get_rhs
         self.X0, self.V0 = self.get_initial_guess()
+    def collocation_operator(self, X, V, V0=None):
+        if V0 is None:
+            V0=np.ones(len(V))*V[0]
+        T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
+        X_pos=X-self.prob.dt*self.coll.Q@V0-self.prob.dt**2*self.coll.QQ@self.build_f(X, V, T)
+        V_pos=V-self.prob.dt*self.coll.Q@self.build_f(X, V, T)
+        return X_pos, V_pos
+        
+
+
 
     def sdc_sweep(self, X_old, V_old, tau_pos=[None], tau_vel=[None]):
 
