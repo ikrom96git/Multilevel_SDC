@@ -207,7 +207,7 @@ class transfer_class(object):
         print(res.message)
         return res.x
     
-    def fast_min_operator(self, X_fine, V_fine, fine_level=None, coarse_zero_order=None, coarse_first_order=None):
+    def arg_min_restriction_operator(self, X_)
         
 
 
