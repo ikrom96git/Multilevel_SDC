@@ -28,6 +28,12 @@ class transfer_class(object):
         self.Paverage = self.get_transfer_interp_matrix_Q(
             self.sdc_fine_level.coll.nodes, self.sdc_coarse_level.coll.nodes
         )
+        V0_fist=np.zeros(6)
+        self.X0_zero=self.sdc_fine_level.prob.u0[0]*np.ones(self.sdc_coarse_level.coll.num_nodes+1)
+        self.V0_zero=self.sdc_fine_level.prob.u0[1]*np.ones(self.sdc_coarse_level.coll.num_nodes+1)
+        
+        
+
 
     def get_sorted_params(
         self, problem_params, collocation_params, sweeper_params, problem_class
@@ -57,6 +63,10 @@ class transfer_class(object):
                 sweeper_params,
                 problem_class_coarse_first,
             )
+            self.X0_first=np.zeros(self.sdc_coarse_first_order.coll.num_nodes+1)
+            self.V0_first=np.zeros(self.sdc_coarse_first_order.coll.num_nodes+1)
+            
+
 
         self.sdc_fine_level = sdc_class(
             problem_params_fine,
@@ -190,24 +200,54 @@ class transfer_class(object):
         return tau_pos, tau_vel, X_coarse, V_coarse
 
     def arg_min_function(self, y, y_star, num_nodes):
-        if len(y_star)==num_nodes:
-            func=np.linalg.norm(y-y_star)**2
-        else:
-            func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+np.linalg.norm(np.sqrt(self.eps)*(y[num_nodes:]-y_star[num_nodes:]))**2
+        func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+np.linalg.norm(y[num_nodes:]-y_star[num_nodes:])**2
         return func
 
     def arg_min(self, U, y_star, num_nodes):
-        if len(y_star)==num_nodes:
-            cons=({'type':'eq', 'fun': lambda y: y-U})
-            y0=np.ones(len(U))*U[0]
-        else:
-            cons=({'type':'eq', 'fun': lambda y: y[0:num_nodes]+np.sqrt(self.eps)*y[num_nodes:]-U})
-            y0=np.block([np.ones(len(U))*U[0], np.zeros(len(U))])
+        cons=({'type':'eq', 'fun': lambda y: y[0:num_nodes]+np.sqrt(self.eps)*y[num_nodes:]-U})
+        y0=y_star
         res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes), constraints=cons)
         print(res.message)
         return res.x
     
-    def arg_min_restriction_operator(self, X_)
+    def arg_min_restriction_operator(self, X_fine, V_fine, operator=False):
+        # if operator:
+        #     Ac_zeros_pos, Ac_zeros_vel=self.sdc_coarse_level.collocation_operator(self.X0_zero, self.V0_zero)
+        #     print(self.X0_first)
+        #     Ac_first_pos, Ac_first_vel=self.sdc_coarse_first_order.collocation_operator(self.X0_first, self.V0_first, self.V0_first*0.0)
+        #     X_star=np.block([Ac_zeros_pos, Ac_first_pos])
+        #     V_star=np.block([Ac_zeros_vel, Ac_first_vel])
+        # else:
+        #     X_star=np.block([self.X0_zero, self.X0_first])
+        #     V_star=np.block([self.V0_zero, self.V0_first])
+        X_zero_average, V_zero_average, X_first_average, V_first_average=self.restriction_operator(X_fine, V_fine)
+        X_star=np.block([X_zero_average, X_first_average])
+        V_star=np.block([V_zero_average, V_first_average])
+        print(X_first_average)
+        X_zero_min, V_zero_min=np.split(self.arg_min(X_fine, X_star, 6), 2)
+        X_first_min, V_first_min=np.split(self.arg_min(V_fine, V_star, 6), 2)
+        return X_zero_min, V_zero_min, X_first_min, V_first_min
+    
+    def fas_asyp_arg_min_model(self, X_fine, V_fine, fine_level=None, coarse_zeros_level=None, coarse_first_order=None):
+        RX_zeros_order, RV_zeros_order, RX_first_order, RV_first_order=self.arg_min_restriction_operator(X_fine, V_fine)
+        
+        Rfine_pos, Rfine_vel=fine_level.collocation_operator(X_fine, V_fine)
+
+        Rcoarse_zeros_pos, Rcoarse_zeros_vel=coarse_zeros_level.collocation_operator(RX_zeros_order, RV_zeros_order)
+        
+        V0first_order=0.0*RV_first_order
+        Rcoarse_first_pos, Rcoarse_first_vel=coarse_first_order.collocation_operator(RX_first_order, RV_first_order, V0=V0first_order)
+        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.arg_min_restriction_operator(Rfine_pos, Rfine_vel, operator=True)
+        tau_pos_zeros=Rcoarse_zeros_pos-Rfine_zeros_pos
+        tau_vel_zeros=Rcoarse_zeros_vel-Rfine_zeros_vel
+        tau_pos_first=Rcoarse_first_pos-Rfine_first_pos
+        tau_vel_first=Rcoarse_first_vel-Rfine_first_vel
+        return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first
+
+            
+
+
+
         
 
 
@@ -240,56 +280,7 @@ class transfer_class(object):
         tau_pos=np.append(0.0, tau_pos)
         tau_vel=np.append(0.0, tau_vel)
         return tau_pos, tau_vel, X_coarse, V_coarse
-    
-    def FAS_with_arg_min_first_order(self, X_fine, V_fine, fine_level=None, coarse_level=None, coarse_level_first=None):
-        if fine_level is None:
-            fine_level = self.sdc_fine_level
-        if coarse_level is None:
-            coarse_level = self.sdc_coarse_level
-        if coarse_level_first is None:
-            coarse_level_first = self.sdc_coarse_first_order
-        X_star=np.block([np.ones(fine_level.coll.num_nodes)*X_fine[0], np.zeros(fine_level.coll.num_nodes)])
-        V_star=np.block([np.ones(fine_level.coll.num_nodes)*V_fine[0], np.zeros(fine_level.coll.num_nodes)])
-        X_coarse=self.arg_min(X_fine[1:], X_star, fine_level.coll.num_nodes)
-        V_coarse=self.arg_min(V_fine[1:], V_star, fine_level.coll.num_nodes)
-        X_zeros, X_first=np.split(X_coarse, 2)
-        V_zeros, V_first=np.split(V_coarse, 2)
-        dt_fine = fine_level.prob.dt
-        dt_zeros = coarse_level.prob.dt
-        dt_first=coarse_level_first.prob.dt
-        F_fine = fine_level.build_f(
-            X_fine[1:], V_fine[1:], dt_fine * fine_level.coll.nodes
-        )
-        F_zeros = coarse_level.build_f(
-            X_zeros, V_zeros, dt_zeros * coarse_level.coll.nodes
-        )
-        F_first=coarse_level_first.build_f(X_first, V_first, dt_first*coarse_level_first.coll.num_nodes)
-        QF_fine_pos=fine_level.coll.QQ[1:,1:]@F_fine
-        QF_fine_vel=fine_level.coll.Q[1:,1:]@F_fine
-        RF_zeros_vel = coarse_level.coll.Q[1:, 1:] @ F_zeros
-        RF_zeros_pos = coarse_level.coll.QQ[1:, 1:] @ F_zeros
-        RF_first_vel = coarse_level_first.coll.Q[1:, 1:] @ F_first
-        RF_first_pos = coarse_level_first.coll.QQ[1:, 1:] @ F_first
-        RF_star_pos=np.block([RF_zeros_pos, RF_first_pos])
-        RF_star_vel=np.block([RF_zeros_vel, RF_first_vel])
-        RF_fine_pos=self.arg_min(QF_fine_pos, RF_star_pos, coarse_level.coll.num_nodes)
-        RF_fine_vel=self.arg_min(QF_fine_vel, RF_star_vel, coarse_level.coll.num_nodes)
-        RF_zeros_pos_first, RF_first_pos_first=np.split(RF_fine_pos, 2)
-        RF_zeros_vel_first, RF_first_vel_first=np.split(RF_fine_vel, 2)
-        tau_zeros_pos=(dt_fine**2)*RF_zeros_pos_first-(dt_zeros**2)*RF_zeros_pos
-        tau_zeros_vel=dt_fine*RF_zeros_vel_first-dt_zeros*RF_zeros_vel
-        tau_first_pos=(dt_fine**2)*RF_first_pos_first-(dt_first**2)*RF_first_pos
-        tau_first_vel=dt_fine*RF_first_vel_first-dt_first*RF_first_vel
-        X_zeros=np.append(X_fine[0], X_zeros)
-        V_zeros=np.append(V_fine[0], V_zeros)
-        X_first=np.append(0.0, X_first)
-        V_first=np.append(0.0, V_first)
-        tau_zeros_pos=np.append(0.0, tau_zeros_pos)
-        tau_zeros_vel=np.append(0.0, tau_zeros_vel)
-        tau_first_pos=np.append(0.0, tau_first_pos)
-        tau_first_vel=np.append(0.0, tau_first_vel)
-        return tau_zeros_pos, tau_zeros_vel, tau_first_pos, tau_first_vel, X_zeros, V_zeros, X_first, V_first
-    
+
     
 
 

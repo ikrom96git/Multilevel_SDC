@@ -96,7 +96,7 @@ def test_mlsdc_first_averaging():
         problem_params_reduced,
         collocation_params,
         sweeper_params,
-        problem_class_zeros,
+        problem_class_first,
     )
 
     model_averaged_first_order_mlsdc=Mlsdc_class(problem_params_reduced,
@@ -104,7 +104,7 @@ def test_mlsdc_first_averaging():
         sweeper_params,
         problem_class_first)
     model_mlsdc.get_mlsdc_iter_solution()
-    model_averaged_mlsdc.get_mlsdc_iter_averaged()
+    model_averaged_mlsdc.get_mlsdc_iter_arg_min_first_order()
     model_reduced_mlsdc.get_mlsdc_iter_solution()
     model_averaged_first_order_mlsdc.get_mlsdc_iter_asyp_expan()
     Residual_mlsdc = model_mlsdc.sdc_fine_level.get_residual
@@ -114,10 +114,10 @@ def test_mlsdc_first_averaging():
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
 
     Title = "Residual MLSDC VS Reduced model"
-    label_set = ["MLSDC ", "$0^{th}$ order model", "$0^{th}$ order averaged model", "$1^{th}$ order averaged model"]
+    label_set = ["MLSDC ", "$1^{th}$ order arg min model", "$1^{th}$ order averaged model"]
     residual_set = [
         np.array(Residual_mlsdc)[:, 0],
-        np.array(Residual_reduced)[:, 0],
+        # np.array(Residual_reduced)[:, 0],
         np.array(Residual_averaged_zeros)[:, 0],
         np.array(Residual_averaged_first)[:,0]
     ]

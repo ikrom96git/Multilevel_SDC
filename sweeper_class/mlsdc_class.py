@@ -142,12 +142,13 @@ class Mlsdc_class(transfer_class):
         return X_fine, V_fine
     
     def mlsdc_arg_min_first_order_sweep(self, X_old, V_old):
-        tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first, X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old = self.FAS_with_arg_min_first_order(
+        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.arg_min_restriction_operator(X_old, V_old)
+        tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first = self.fas_asyp_arg_min_model(
             X_old,
             V_old,
             fine_level=self.sdc_fine_level,
-            coarse_level=self.sdc_coarse_level,
-            coarse_level_first=self.sdc_coarse_first_order,
+            coarse_zeros_level=self.sdc_coarse_level,
+            coarse_first_order=self.sdc_coarse_first_order,
         )
         X_coarse_zeros, V_coarse_zeros = self.sdc_coarse_level.sdc_sweep(
             X_zeros_coarse_old, V_zeros_coarse_old, tau_pos=tau_pos_zeros, tau_vel=tau_vel_zeros
@@ -155,6 +156,7 @@ class Mlsdc_class(transfer_class):
         X_coarse_first, V_coarse_first = self.sdc_coarse_first_order.sdc_sweep(
             X_first_coarse_old, V_first_coarse_old, tau_pos=tau_pos_first, tau_vel=tau_vel_first
         )
+       
         pos_coarse = self.sdc_coarse_first_order.problem_class.asyp_expansion(
             X_coarse_zeros, X_coarse_first, eps=self.eps
         )
