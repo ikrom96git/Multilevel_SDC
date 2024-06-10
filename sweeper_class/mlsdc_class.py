@@ -142,13 +142,13 @@ class Mlsdc_class(transfer_class):
         return X_fine, V_fine
     
     def mlsdc_arg_min_first_order_sweep(self, X_old, V_old):
-        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.arg_min_restriction_operator(X_old, V_old)
-        tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first = self.fas_asyp_arg_min_model(
+        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.last_idea_more_restriction(X_old, V_old ,fine_level=self.sdc_fine_level, coarse_zeros_order=self.sdc_coarse_level, coarse_first_order=self.sdc_coarse_first_order)
+        tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first = self.last_idea_for_fas(
             X_old,
             V_old,
-            fine_level=self.sdc_fine_level,
-            coarse_zeros_level=self.sdc_coarse_level,
-            coarse_first_order=self.sdc_coarse_first_order,
+            fine_prob=self.sdc_fine_level,
+            coarse_zeros_prob=self.sdc_coarse_level,
+            coarse_first_prob=self.sdc_coarse_first_order,
         )
         X_coarse_zeros, V_coarse_zeros = self.sdc_coarse_level.sdc_sweep(
             X_zeros_coarse_old, V_zeros_coarse_old, tau_pos=tau_pos_zeros, tau_vel=tau_vel_zeros
@@ -306,3 +306,9 @@ class Mlsdc_class(transfer_class):
             X[m + 1] = X[m] + tau_pos_node_to_node[m + 1]
             V[m + 1] = V[m] + tau_vel_node_to_node[m + 1]
         return X, V
+
+    
+
+    def get_mlsdc_ntime_sweep(self, time):
+        pass
+        

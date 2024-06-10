@@ -67,12 +67,15 @@ def test_mlsdc_zeros_averaging():
     plot_residual(Kiter, residual_set, Title, label_set)
 
 def test_mlsdc_first_averaging():
+    EPSILON=0.001
     problem_params, collocation_params, sweeper_params, problem_class = (
-        get_mlsdc_default_params("Fast_time")
+        get_mlsdc_default_params("Fast_time", eps=EPSILON)
     )
     problem_fast_time_params, *_ = get_harmonic_oscillator_fast_time_params(
-        Fast_time=True
+        Fast_time=True, eps=EPSILON
     )
+    
+
     problem_class_zeros = [
         problem_class[0],
         HarmonicOscillator_fast_time,
@@ -84,19 +87,19 @@ def test_mlsdc_first_averaging():
     ]
     problem_params_reduced = [problem_params, problem_fast_time_params]
     model_mlsdc = Mlsdc_class(
-        problem_params, collocation_params, sweeper_params, problem_class
+        problem_params, collocation_params, sweeper_params, problem_class, eps=EPSILON
     )
     model_reduced_mlsdc = Mlsdc_class(
         problem_params_reduced,
         collocation_params,
         sweeper_params,
-        problem_class_zeros,
+        problem_class_zeros, eps=EPSILON
     )
     model_averaged_mlsdc = Mlsdc_class(
         problem_params_reduced,
         collocation_params,
         sweeper_params,
-        problem_class_first,
+        problem_class_first,eps=EPSILON
     )
 
     model_averaged_first_order_mlsdc=Mlsdc_class(problem_params_reduced,
@@ -114,7 +117,7 @@ def test_mlsdc_first_averaging():
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
 
     Title = "Residual MLSDC VS Reduced model"
-    label_set = ["MLSDC ", "$1^{th}$ order arg min model", "$1^{th}$ order averaged model"]
+    label_set = ["MLSDC ", "$1^{th}$ Yesterday idea", "$1^{th}$ order averaged model"]
     residual_set = [
         np.array(Residual_mlsdc)[:, 0],
         # np.array(Residual_reduced)[:, 0],

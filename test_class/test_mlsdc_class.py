@@ -1,16 +1,18 @@
 import numpy as np
 from default_params.mlsdc_defautl_params import get_mlsdc_default_params
 from default_params.sdc_default_params import get_sdc_default_params
+from default_params.harmonic_oscillator_default_fast_time_params import get_harmonic_oscillator_fast_time_params
 from sweeper_class.mlsdc_class import Mlsdc_class
 from sweeper_class.sdc_class import sdc_class
 from problem_class.HarmonicOscillator import HarmonicOscillator
+from problem_class.HarmonicOscillator_fast_time_reduced_problem import HarmonicOscillator_fast_time, HarmonicOscillator_fast_time_first_order
 from plot_class.plot_solutionvstime import plot_solution
 from plot_class.plot_residual import plot_residual
 
 
 def test_solution(Force=True):
     problem_params, collocation_params, sweeper_params, problem_class = (
-        get_mlsdc_default_params(Force=Force)
+        get_mlsdc_default_params(Force='Fast_time')
     )
     mlsdc_model = Mlsdc_class(
         problem_params, collocation_params, sweeper_params, problem_class
@@ -19,13 +21,23 @@ def test_solution(Force=True):
     time = 0.1 * np.append(
         mlsdc_model.sdc_fine_level.prob.t0, mlsdc_model.sdc_fine_level.coll.nodes
     )
+    prob_fast_time_params, fast_time=get_harmonic_oscillator_fast_time_params(Fast_time=True)
+    time_fast=time/np.sqrt(mlsdc_model.eps)
+    model_zeros_order = HarmonicOscillator_fast_time(prob_fast_time_params)
+    model_first_order = HarmonicOscillator_fast_time_first_order(prob_fast_time_params)
+    solution_fast = model_zeros_order.get_ntime_exact_solution(fast_time)
+    solution_first = model_first_order.get_ntime_exact_solution(fast_time)
+    position = model_first_order.asyp_expansion(
+        solution_fast[0, :], solution_first[0, :], eps=mlsdc_model.eps
+    )
     harmonic_oscillator = HarmonicOscillator(problem_params)
-    Exact_solution = harmonic_oscillator.get_solution_ntimeWithForce(time)
-    Title = "MLSDC solution"
-    label_set = ["Solution MLSDC", "Exact_solution"]
-    solution_set = [X, Exact_solution[0, :]]
+    Exact_solution = harmonic_oscillator.get_solution_ntimeWithForce(fast_time*np.sqrt(mlsdc_model.eps))
 
-    plot_solution(time, solution_set, Title, label_set)
+    Title = fr"Solution $\varepsilon=${mlsdc_model.eps}"
+    label_set = ["MLSDC", "Exact solution", 'reduced order model']
+    solution_set = [X, Exact_solution[0, :], position]
+
+    plot_solution(fast_time*np.sqrt(mlsdc_model.eps), solution_set, Title, label_set)
 
 
 def test_residual(Force=False):
@@ -98,6 +110,6 @@ def test_mlsdc_vs_sdc_solution(Force=False):
 
 
 if __name__ == "__main__":
-    # test_solution()
-    test_residual(Force='Fast_time')
+    test_solution()
+    # test_residual(Force='Fast_time')
     # test_mlsdc_vs_sdc_solution()

@@ -3,13 +3,13 @@ from sweeper_class.sdc_class import sdc_class
 from copy import deepcopy
 from core.Lagrange import LagrangeApproximation
 from scipy.optimize import minimize
-
+from default_params.harmonic_oscillator_default_params import eps_fast_time
 class transfer_class(object):
     def __init__(
         self, problem_params, collocation_params, sweeper_params, problem_class, eps
     ):
         if eps is None:
-            self.eps = 0.001
+            self.eps = eps_fast_time
         else:
             self.eps = eps
         self.get_sorted_params(
@@ -200,14 +200,19 @@ class transfer_class(object):
         return tau_pos, tau_vel, X_coarse, V_coarse
 
     def arg_min_function(self, y, y_star, num_nodes):
-        func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+np.linalg.norm(y[num_nodes:]-y_star[num_nodes:])**2
+        func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+np.linalg.norm((y[num_nodes:]-y_star[num_nodes:]))**2
         return func
 
     def arg_min(self, U, y_star, num_nodes):
         cons=({'type':'eq', 'fun': lambda y: y[0:num_nodes]+np.sqrt(self.eps)*y[num_nodes:]-U})
         y0=y_star
-        res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes), constraints=cons)
+        res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes), constraints=cons, tol=1e-13)
         print(res.message)
+        print(res.status)
+        print(res.nfev)
+        print(res.fun)
+        print(res.success)
+        breakpoint()
         return res.x
     
     def arg_min_restriction_operator(self, X_fine, V_fine, operator=False):
@@ -223,7 +228,6 @@ class transfer_class(object):
         X_zero_average, V_zero_average, X_first_average, V_first_average=self.restriction_operator(X_fine, V_fine)
         X_star=np.block([X_zero_average, X_first_average])
         V_star=np.block([V_zero_average, V_first_average])
-        print(X_first_average)
         X_zero_min, V_zero_min=np.split(self.arg_min(X_fine, X_star, 6), 2)
         X_first_min, V_first_min=np.split(self.arg_min(V_fine, V_star, 6), 2)
         return X_zero_min, V_zero_min, X_first_min, V_first_min
@@ -244,7 +248,45 @@ class transfer_class(object):
         tau_vel_first=Rcoarse_first_vel-Rfine_first_vel
         return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first
 
-            
+    def last_idea_for_restriction(self, X, V, fine_level=None, coarse_zeros_order=None, coarse_first_order=None):
+        X_zero=np.ones(len(X))*X[0]+coarse_zeros_order.prob.dt*coarse_zeros_order.coll.Q@V
+        X_first=(X-X_zero)/np.sqrt(self.eps)
+        
+        T=coarse_zeros_order.prob.dt*np.append(0, coarse_zeros_order.coll.nodes)
+        V_zero=np.ones(len(V))*V[0]+np.sin(T)-coarse_zeros_order.prob.dt*coarse_zeros_order.coll.Q@X
+        V_first=(V-V_zero)/np.sqrt(self.eps)
+        return X_zero, V_zero, X_first, V_first
+    
+    def last_idea_more_restriction(self, X, V, fine_level=None, coarse_zeros_order=None, coarse_first_order=None):
+        T=coarse_zeros_order.prob.dt*np.append(0, coarse_zeros_order.coll.nodes)
+        V_sin=np.ones(len(V))*V[0]+np.sin(T)
+        X_zero=np.ones(len(X))*X[0]+coarse_zeros_order.prob.dt*coarse_zeros_order.coll.Q@V_sin-(coarse_zeros_order.prob.dt**2)*coarse_zeros_order.coll.QQ@X
+        X_first=(X-X_zero)/np.sqrt(self.eps)
+        # X_first=-0.8*(coarse_zeros_order.prob.dt**2)*coarse_first_order.coll.QQ@V
+        
+        V_zero=np.ones(len(V))*V[0]+np.sin(T)-coarse_zeros_order.prob.dt*coarse_zeros_order.coll.Q@X
+        # V_first=-0.8*coarse_first_order.prob.dt*coarse_first_order.coll.Q@V
+        V_first=(V-V_zero)/np.sqrt(self.eps)
+        # V_first[0]=0
+        # X_first[0]=0
+        return X_zero, V_zero, X_first, V_first
+    
+    def last_idea_for_fas(self, X, V, fine_prob=None, coarse_zeros_prob=None, coarse_first_prob=None):
+        X_zero, V_zero, X_first, V_first=self.last_idea_more_restriction(X, V, fine_level=fine_prob, coarse_zeros_order=coarse_zeros_prob, coarse_first_order=coarse_first_prob)
+        Rfine_pos, Rfine_vel=fine_prob.collocation_operator(X, V)
+
+        Rcoarse_zeros_pos, Rcoarse_zeros_vel=coarse_zeros_prob.collocation_operator(X_zero, V_zero)
+        
+        V0first_order=0.0*V_first
+        Rcoarse_first_pos, Rcoarse_first_vel=coarse_first_prob.collocation_operator(X_first, V_first, V0=V0first_order)
+        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.last_idea_more_restriction(Rfine_pos, Rfine_vel, fine_level=fine_prob, coarse_zeros_order=coarse_zeros_prob, coarse_first_order=coarse_first_prob)
+        tau_pos_zeros=Rcoarse_zeros_pos-Rfine_zeros_pos
+        tau_vel_zeros=Rcoarse_zeros_vel-Rfine_zeros_vel
+        tau_pos_first=Rcoarse_first_pos-Rfine_first_pos
+        tau_vel_first=Rcoarse_first_vel-Rfine_first_vel
+        # breakpoint()
+        return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first
+
 
 
 

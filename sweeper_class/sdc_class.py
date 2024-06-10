@@ -24,6 +24,12 @@ class sdc_class(object):
         X_pos=X-self.prob.dt*self.coll.Q@V0-self.prob.dt**2*self.coll.QQ@self.build_f(X, V, T)
         V_pos=V-self.prob.dt*self.coll.Q@self.build_f(X, V, T)
         return X_pos, V_pos
+    
+    def get_update_step(self, X, V):
+        T = self.prob.dt * self.coll.nodes
+        X_update=X[0]+self.prob.dt*V[0]+self.prob.dt**2*(self.coll.q@self.coll.Q[1:,1:])@self.build_f(X, V, T)
+        V_update=V[0]+self.prob.dt*self.coll.q@self.build_f(X, V, T)
+        return X_update, V_update
         
 
 
