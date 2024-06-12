@@ -4,4 +4,4 @@
 *.npy
 *.csv
 *.txt
-
+__pycache__/
