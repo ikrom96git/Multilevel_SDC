@@ -142,7 +142,7 @@ class Mlsdc_class(transfer_class):
         return X_fine, V_fine
     
     def mlsdc_arg_min_first_order_sweep(self, X_old, V_old):
-        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.last_idea_more_restriction(X_old, V_old ,fine_level=self.sdc_fine_level, coarse_zeros_order=self.sdc_coarse_level, coarse_first_order=self.sdc_coarse_first_order)
+        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.restriction_duffing_equation(X_old, V_old ,fine_level=self.sdc_fine_level, coarse_zeros_order=self.sdc_coarse_level, coarse_first_order=self.sdc_coarse_first_order)
         tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first = self.last_idea_for_fas(
             X_old,
             V_old,

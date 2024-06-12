@@ -11,7 +11,7 @@ class HarmonicOscillator_fast_time(object):
 
     def get_rhs(self, u, t):
         u = np.asarray(u)
-        y_dot = u[0]
+        y_dot = u[1]
         v_dot = -self.params.mu * u[1] - self.params.kappa * u[0] + self.params.F0
         return np.asarray([y_dot, v_dot])
 

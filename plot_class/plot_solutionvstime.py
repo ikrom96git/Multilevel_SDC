@@ -12,4 +12,5 @@ def plot_solution(time, solution, title, label_set):
     plt.ylabel("Solution")
     plt.legend()
     plt.tight_layout()
+    plt.grid()
     plt.show()

@@ -42,6 +42,11 @@ class transfer_class(object):
         if len(problem_params) == 2:
             problem_params_fine = problem_params[0]
             problem_params_coarse = problem_params[1]
+            problem_params_first=problem_params[1]
+        elif len(problem_params)==3:
+            problem_params_fine = problem_params[0]
+            problem_params_coarse = problem_params[1]
+            problem_params_first=problem_params[2]
         else:
             problem_params_fine = problem_params
             problem_params_coarse = problem_params
@@ -58,7 +63,7 @@ class transfer_class(object):
             problem_class_coarse = problem_class[1]
             problem_class_coarse_first = problem_class[2]
             self.sdc_coarse_first_order = sdc_class(
-                problem_params_coarse,
+                problem_params_first,
                 collocation_params_coarse,
                 sweeper_params,
                 problem_class_coarse_first,
@@ -272,14 +277,14 @@ class transfer_class(object):
         return X_zero, V_zero, X_first, V_first
     
     def last_idea_for_fas(self, X, V, fine_prob=None, coarse_zeros_prob=None, coarse_first_prob=None):
-        X_zero, V_zero, X_first, V_first=self.last_idea_more_restriction(X, V, fine_level=fine_prob, coarse_zeros_order=coarse_zeros_prob, coarse_first_order=coarse_first_prob)
+        X_zero, V_zero, X_first, V_first=self.restriction_duffing_equation(X, V, fine_level=fine_prob, coarse_zeros_order=coarse_zeros_prob, coarse_first_order=coarse_first_prob)
         Rfine_pos, Rfine_vel=fine_prob.collocation_operator(X, V)
 
         Rcoarse_zeros_pos, Rcoarse_zeros_vel=coarse_zeros_prob.collocation_operator(X_zero, V_zero)
         
         V0first_order=0.0*V_first
         Rcoarse_first_pos, Rcoarse_first_vel=coarse_first_prob.collocation_operator(X_first, V_first, V0=V0first_order)
-        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.last_idea_more_restriction(Rfine_pos, Rfine_vel, fine_level=fine_prob, coarse_zeros_order=coarse_zeros_prob, coarse_first_order=coarse_first_prob)
+        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.restriction_duffing_equation(Rfine_pos, Rfine_vel, fine_level=fine_prob, coarse_zeros_order=coarse_zeros_prob, coarse_first_order=coarse_first_prob)
         tau_pos_zeros=Rcoarse_zeros_pos-Rfine_zeros_pos
         tau_vel_zeros=Rcoarse_zeros_vel-Rfine_zeros_vel
         tau_pos_first=Rcoarse_first_pos-Rfine_first_pos
@@ -287,6 +292,19 @@ class transfer_class(object):
         # breakpoint()
         return tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first
 
+    def restriction_duffing_equation(self, X, V, fine_level=None, coarse_zeros_order=None, coarse_first_order=None):
+        T=coarse_zeros_order.prob.dt*np.append(0, coarse_zeros_order.coll.nodes)
+        dt_coarse=coarse_zeros_order.prob.dt
+        X_zeros=np.ones(len(X))*X[0]+dt_coarse*coarse_zeros_order.coll.Q@V
+        duffin2=True
+        if not duffin2:
+            V_zeros=np.ones(len(V))*V[0]-dt_coarse*coarse_zeros_order.coll.Q@(self.sdc_fine_level.prob.omega**2*X)
+        else:
+            V_zeros=np.ones(len(V))*V[0]-dt_coarse*coarse_zeros_order.coll.Q@(self.sdc_fine_level.prob.omega**2*X)+dt_coarse*coarse_zeros_order.coll.Q@(self.eps*(V**2)*X)
+        X_first=(X-X_zeros)/self.eps
+        V_first=(V-V_zeros)/self.eps
+        return X_zeros, V_zeros, X_first, V_first
+    
 
 
 
