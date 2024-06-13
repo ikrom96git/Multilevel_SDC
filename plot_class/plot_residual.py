@@ -12,4 +12,6 @@ def plot_residual(Kiter, residual_set, Title, label_set):
     plt.ylabel("$\|R\|_{\infty}$")
     plt.legend()
     plt.tight_layout()
+    plt.savefig("restriction_fig.pdf")
     plt.show()
+    

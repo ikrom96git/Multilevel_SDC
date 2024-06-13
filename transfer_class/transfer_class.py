@@ -149,16 +149,10 @@ class transfer_class(object):
 
     
     def restriction_operator(self, X_fine, V_fine):
-        RX_zeros_averaged=self.averaging_over_time_pos(X_fine[1:], level=self.sdc_fine_level)
-        RV_zeros_averaged=self.averaging_over_time_vel(V_fine[1:], level=self.sdc_fine_level)
-        RX_zeros_order=np.ones(len(X_fine[1:]))*RX_zeros_averaged
-        RV_zeros_order=np.ones(len(V_fine[1:]))*RV_zeros_averaged
-        RX_first_order=self.averaging_first_order(X_fine[1:], RX_zeros_order)
-        RV_first_order=self.averaging_first_order(V_fine[1:], RV_zeros_order)
-        RX_zeros_order=np.append(X_fine[0], RX_zeros_order)
-        RV_zeros_order=np.append(V_fine[0], RV_zeros_order)
-        RX_first_order=np.append(0.0, RX_first_order)
-        RV_first_order=np.append(0.0, RV_first_order)
+        RX_zeros_order=np.append(X_fine[0], self.restrict(X_fine[1:]))
+        RV_zeros_order=np.append(V_fine[0], self.restrict(V_fine[1:]))
+        RX_first_order=(X_fine-RX_zeros_order)/self.eps
+        RV_first_order=(V_fine-RV_zeros_order)/self.eps
         return RX_zeros_order, RV_zeros_order, RX_first_order, RV_first_order
 
 
@@ -217,7 +211,7 @@ class transfer_class(object):
         print(res.nfev)
         print(res.fun)
         print(res.success)
-        breakpoint()
+        # breakpoint()
         return res.x
     
     def arg_min_restriction_operator(self, X_fine, V_fine, operator=False):
