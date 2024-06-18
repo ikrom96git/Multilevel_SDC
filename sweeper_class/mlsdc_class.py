@@ -142,7 +142,7 @@ class Mlsdc_class(transfer_class):
         return X_fine, V_fine
     
     def mlsdc_arg_min_first_order_sweep(self, X_old, V_old):
-        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.arg_min_restriction_operator(X_old, V_old)
+        X_zeros_coarse_old, V_zeros_coarse_old, X_first_coarse_old, V_first_coarse_old=self.arg_min_res_operator(X_old, V_old)
         tau_pos_zeros, tau_vel_zeros, tau_pos_first, tau_vel_first = self.fas_asyp_arg_min_model(
             X_old,
             V_old,

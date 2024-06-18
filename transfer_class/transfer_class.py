@@ -199,13 +199,32 @@ class transfer_class(object):
         return tau_pos, tau_vel, X_coarse, V_coarse
 
     def arg_min_function(self, y, y_star, num_nodes):
-        func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+np.linalg.norm((y[num_nodes:]-y_star[num_nodes:]))**2
+        func=np.linalg.norm(y[0:num_nodes]-y_star[0:num_nodes])**2+self.eps*np.linalg.norm((y[num_nodes:]-y_star[num_nodes:]))**2
+        return func
+    
+    def arg_min_restriction(self, y, num_nodes):
+        X_zero, V_zero, X_first, V_first=np.split(y, 4)
+        Residual_zeros=self.sdc_coarse_level.get_coll_residual(X_zero, V_zero, tau_pos=[None], tau_vel=[None])
+        Residual_first=self.sdc_coarse_first_order.get_coll_residual(X_first, V_first, tau_pos=[None], tau_vel=[None])
+        func=np.linalg.norm(Residual_zeros, 2)**2+self.eps*np.linalg.norm(Residual_first, 2)**2
         return func
 
     def arg_min(self, U, y_star, num_nodes):
         cons=({'type':'eq', 'fun': lambda y: y[0:num_nodes]+np.sqrt(self.eps)*y[num_nodes:]-U})
         y0=y_star
-        res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes), constraints=cons, tol=1e-13)
+        res=minimize(self.arg_min_function, y0, args=(y_star, num_nodes),  tol=1e-13)
+        print(res.message)
+        print(res.status)
+        print(res.nfev)
+        print(res.fun)
+        print(res.success)
+        # breakpoint()
+        return res.x
+    def arg_min_res(self, U, y_star, num_nodes):
+        
+        cons=({'type':'eq', 'fun': lambda y: y[0:2*num_nodes]+self.eps*y[2*num_nodes:]-U})
+        y0=y_star
+        res=minimize(self.arg_min_restriction, y0, args=(num_nodes), constraints=cons,  tol=1e-13)
         print(res.message)
         print(res.status)
         print(res.nfev)
@@ -231,8 +250,15 @@ class transfer_class(object):
         X_first_min, V_first_min=np.split(self.arg_min(V_fine, V_star, 6), 2)
         return X_zero_min, V_zero_min, X_first_min, V_first_min
     
+    def arg_min_res_operator(self, X_fine, V_fine):
+        X_zero_average, V_zero_average, X_first_average, V_first_average=self.restriction_operator(X_fine, V_fine)
+        U=np.block([X_fine, V_fine])
+        Y=np.block([X_zero_average, V_zero_average, X_first_average, V_first_average])
+        X_zeros_min, V_zeros_min, X_first_min, V_first_min=np.split(self.arg_min_res(U, Y, 6), 4)
+        return X_zeros_min, V_zeros_min, X_first_min, V_first_min 
+    
     def fas_asyp_arg_min_model(self, X_fine, V_fine, fine_level=None, coarse_zeros_level=None, coarse_first_order=None):
-        RX_zeros_order, RV_zeros_order, RX_first_order, RV_first_order=self.arg_min_restriction_operator(X_fine, V_fine)
+        RX_zeros_order, RV_zeros_order, RX_first_order, RV_first_order=self.arg_min_res_operator(X_fine, V_fine)
         
         Rfine_pos, Rfine_vel=fine_level.collocation_operator(X_fine, V_fine)
 
@@ -240,7 +266,7 @@ class transfer_class(object):
         
         V0first_order=0.0*RV_first_order
         Rcoarse_first_pos, Rcoarse_first_vel=coarse_first_order.collocation_operator(RX_first_order, RV_first_order, V0=V0first_order)
-        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.arg_min_restriction_operator(Rfine_pos, Rfine_vel, operator=True)
+        Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel=self.arg_min_res_operator(Rfine_pos, Rfine_vel)
         tau_pos_zeros=Rcoarse_zeros_pos-Rfine_zeros_pos
         tau_vel_zeros=Rcoarse_zeros_vel-Rfine_zeros_vel
         tau_pos_first=Rcoarse_first_pos-Rfine_first_pos
@@ -293,10 +319,12 @@ class transfer_class(object):
         duffin2=True
         if not duffin2:
             V_zeros=np.ones(len(V))*V[0]-dt_coarse*coarse_zeros_order.coll.Q@(self.sdc_fine_level.prob.omega**2*X)
+            print('Something')
         else:
             V_zeros=np.ones(len(V))*V[0]-dt_coarse*coarse_zeros_order.coll.Q@(self.sdc_fine_level.prob.omega**2*X)+dt_coarse*coarse_zeros_order.coll.Q@(self.eps*(V**2)*X)
         X_first=(X-X_zeros)/self.eps
         V_first=(V-V_zeros)/self.eps
+        # breakpoint()
         return X_zeros, V_zeros, X_first, V_first
     
 

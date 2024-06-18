@@ -1,5 +1,5 @@
 import numpy as np
-dt=.2
+dt=.01
 def get_duffing_equation_params(eps=None):
     problem_params=dict()
     problem_params['omega']=1.0

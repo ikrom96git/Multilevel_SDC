@@ -130,6 +130,19 @@ class sdc_class(object):
         vel_max_norm = self.max_norm_residual(vel_residual)
         pos_max_norm = self.max_norm_residual(pos_residual)
         return [pos_max_norm, vel_max_norm]
+    def get_coll_residual(self, X, V, tau_pos, tau_vel):
+        X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
+        V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
+        T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
+        vel_residual = V0 + self.prob.dt * self.coll.Q @ self.build_f(X, V, T) - V
+        pos_residual = (
+            X0
+            + self.prob.dt * self.coll.Q @ V0
+            + self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
+            - X
+        )
+        return pos_residual, vel_residual
+
 
     def max_norm_residual(self, residual):
         return np.max(np.abs(residual))
