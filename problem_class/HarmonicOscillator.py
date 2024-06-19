@@ -18,6 +18,7 @@ class HarmonicOscillator:
         None.
 
         """
+        self.__name__='Harmonic_Oscillator'
         self.params = _Pars(problem_params)
         self.determinant = self.params.mu**2 * 0.25 - self.params.kappa
 

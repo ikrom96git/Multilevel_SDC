@@ -1,19 +1,19 @@
 import numpy as np
-from transfer_class.transfer_class import transfer_class
 from copy import deepcopy
+from core.sort_params import SortParams
 
-
-class Mlsdc_class(transfer_class):
+class Mlsdc_class(SortParams):
     def __init__(
         self,
         problem_params,
         collocation_params,
         sweeper_params,
         problem_class,
+        restriction_class, 
         eps=None,
     ):
         super().__init__(
-            problem_params, collocation_params, sweeper_params, problem_class, eps
+            problem_params, collocation_params, sweeper_params, problem_class, restriction_class, eps
         )
         self.first_order_model = len(problem_class)
 

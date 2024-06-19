@@ -6,10 +6,10 @@ The Duffing Equation is on page 93
 """
 import numpy as np
 from core.Pars import _Pars
-
-class DuffingEquation(object):
+from problem_class import problem_class
+class DuffingEquation(problem_class):
     def __init__(self, problem_params):
-        
+        self.__name__='Duffing'
         self.params=_Pars(problem_params)
     
     def build_f(self, X, V, T):
@@ -29,7 +29,7 @@ class DuffingEquation(object):
     def get_ntime_exact_solution(self, time):
         pass
 
-class DuffingEquation_zeros_order_problem(object):
+class DuffingEquation_zeros_order_problem(problem_class):
     def __init__(self, problem_params):
         self.params=_Pars(problem_params)
     
@@ -55,7 +55,7 @@ class DuffingEquation_zeros_order_problem(object):
             solution[:, tt]=self.get_exact_solution(time[tt])
         return solution
     
-class DuffingEquation_first_order_problem(object):
+class DuffingEquation_first_order_problem(problem_class):
     def __init__(self, problem_params):
         self.params=_Pars(problem_params)
     
