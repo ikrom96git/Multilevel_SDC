@@ -1,6 +1,7 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
-class transfer_class(ABCMeta):
+
+class transfer_class(ABC):
 
     @abstractmethod
     def restriction_operator(self):
@@ -13,5 +14,3 @@ class transfer_class(ABCMeta):
     # @abstractmethod
     # def interpolation_operator(self):
     #     pass
-
-    

@@ -4,8 +4,8 @@ from default_params.harmonic_oscillator_default_params import (
 from problem_class.HarmonicOscillator import HarmonicOscillator
 
 
-def get_sdc_default_params(Force=False):
-    problem_params, *_ = get_harmonic_oscillator_default_params(Force=Force)
+def get_sdc_default_params(Force=False, eps=None):
+    problem_params, *_ = get_harmonic_oscillator_default_params(Force=Force, eps=eps)
     collocation_params = dict()
     collocation_params["quad_type"] = "GAUSS"
     collocation_params["num_nodes"] = 5

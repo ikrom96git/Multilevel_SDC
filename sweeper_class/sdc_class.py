@@ -17,22 +17,30 @@ class sdc_class(object):
         self.get_residual = []
         self.get_rhs = self.problem_class.get_rhs
         self.X0, self.V0 = self.get_initial_guess()
+
     def collocation_operator(self, X, V, V0=None):
         if V0 is None:
-            V0=np.ones(len(V))*V[0]
+            V0 = np.ones(len(V)) * V[0]
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
-        X_pos=X-self.prob.dt*self.coll.Q@V0-self.prob.dt**2*self.coll.QQ@self.build_f(X, V, T)
-        V_pos=V-self.prob.dt*self.coll.Q@self.build_f(X, V, T)
+        X_pos = (
+            X
+            - self.prob.dt * self.coll.Q @ V0
+            - self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
+        )
+        V_pos = V - self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
         return X_pos, V_pos
-    
+
     def get_update_step(self, X, V):
         T = self.prob.dt * self.coll.nodes
-        X_update=X[0]+self.prob.dt*V[0]+self.prob.dt**2*(self.coll.q@self.coll.Q[1:,1:])@self.build_f(X, V, T)
-        V_update=V[0]+self.prob.dt*self.coll.q@self.build_f(X, V, T)
+        X_update = (
+            X[0]
+            + self.prob.dt * V[0]
+            + self.prob.dt**2
+            * (self.coll.q @ self.coll.Q[1:, 1:])
+            @ self.build_f(X, V, T)
+        )
+        V_update = V[0] + self.prob.dt * self.coll.q @ self.build_f(X, V, T)
         return X_update, V_update
-        
-
-
 
     def sdc_sweep(self, X_old, V_old, tau_pos=[None], tau_vel=[None]):
 
@@ -130,7 +138,7 @@ class sdc_class(object):
         vel_max_norm = self.max_norm_residual(vel_residual)
         pos_max_norm = self.max_norm_residual(pos_residual)
         return [pos_max_norm, vel_max_norm]
-    
+
     def compute_integral(self, X, V):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
@@ -142,7 +150,7 @@ class sdc_class(object):
             + self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
         )
         return velocity, position
-     
+
     def get_coll_residual(self, X, V, tau_pos, tau_vel):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
@@ -155,7 +163,6 @@ class sdc_class(object):
             - X
         )
         return pos_residual, vel_residual
-
 
     def max_norm_residual(self, residual):
         return np.max(np.abs(residual))

@@ -1,5 +1,7 @@
 import numpy as np
-eps_fast_time=0.1
+
+eps_fast_time = 0.1
+
 
 def get_harmonic_oscillator_default_params(Force="Fast_time", eps=None):
     if Force == True:
@@ -23,7 +25,7 @@ def get_harmonic_oscillator_default_params(Force="Fast_time", eps=None):
         problem_params["F0"] = 1 / eps
         problem_params["t0"] = 0.0
         problem_params["u0"] = [2, 0]
-        problem_params["dt"] = .1
+        problem_params["dt"] = 0.1
         time = np.linspace(0, 30, 1000)
     else:
         eps = None

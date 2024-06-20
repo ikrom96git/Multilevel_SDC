@@ -1,6 +1,7 @@
 import numpy as np
 from default_params.harmonic_oscillator_default_params import eps_fast_time
 
+
 def get_harmonic_oscillator_fast_time_params(Fast_time=False, eps=None):
 
     problem_params = dict()
@@ -10,8 +11,7 @@ def get_harmonic_oscillator_fast_time_params(Fast_time=False, eps=None):
     problem_params["t0"] = 0.0
 
     if Fast_time:
-        
-        # print(eps)
+
         problem_params["u0"] = [2, 0]
         problem_params["dt"] = 0.1 / np.sqrt(eps)
         problem_params["F0"] = 1.0

@@ -131,6 +131,7 @@ def test_fast_time_first_order_model():
 
     plot_solution(time_reduced, solution_set, Title, label_set)
 
+
 def test_fast_time_solution_models():
 
     prob_reduced_model_params, time_reduced = (
@@ -146,7 +147,9 @@ def test_fast_time_solution_models():
 
     model_reduced = HarmonicOscillator(prob_reduced_model_params)
     model_fast_time = HarmonicOscillator_fast_time(prob_fast_time_params)
-    model_first_order = HarmonicOscillator_fast_time_first_order(prob_fast_time_first_params)
+    model_first_order = HarmonicOscillator_fast_time_first_order(
+        prob_fast_time_first_params
+    )
     solution_reduced = model_reduced.get_solution_ntimeWithForce(time_reduced)
     solution_fast = model_fast_time.get_ntime_exact_solution(time_fast)
     solution_first = model_first_order.get_ntime_exact_solution(time_fast)
@@ -154,10 +157,11 @@ def test_fast_time_solution_models():
         solution_fast[0, :], solution_first[0, :], eps=0.1
     )
     Title = "Solution of Fast time"
-    label_set = ["Exact solution", "zeros order",  'asyp expansion']
+    label_set = ["Exact solution", "zeros order", "asyp expansion"]
     solution_set = [solution_reduced[0, :], solution_fast[0, :], position]
 
     plot_solution(time_reduced, solution_set, Title, label_set)
+
 
 def test_fast_time_first_order_sdc():
     K = 20

@@ -2,8 +2,18 @@ from sweeper_class.sdc_class import sdc_class
 from core.Lagrange import LagrangeApproximation
 from copy import deepcopy
 import numpy as np
-def SortParams(object):
-    def __init__(self, problem_params, collocation_params, sweeper_params, problem_class, restriction_class, eps):
+
+
+class SortParams(object):
+    def __init__(
+        self,
+        problem_params,
+        collocation_params,
+        sweeper_params,
+        problem_class,
+        restriction_class,
+        eps,
+    ):
         self.eps = eps
         self.get_sorted_params(
             problem_params, collocation_params, sweeper_params, problem_class
@@ -15,17 +25,20 @@ def SortParams(object):
         self.Rcoll = self.get_transfer_matrix_Q(
             self.sdc_coarse_model.coll.nodes, self.sdc_fine_model.coll.nodes
         )
-        self.transfer_class=restriction_class
-    def get_sorted_params(self, problem_params, collocation_params, sweeper_params, problem_class):
+        self.transfer_operator = restriction_class(self.restriction_node)
+
+    def get_sorted_params(
+        self, problem_params, collocation_params, sweeper_params, problem_class
+    ):
 
         if len(problem_params) == 2:
             problem_params_fine = problem_params[0]
             problem_params_coarse = problem_params[1]
-            problem_params_first=problem_params[1]
-        elif len(problem_params)==3:
+            problem_params_first = problem_params[1]
+        elif len(problem_params) == 3:
             problem_params_fine = problem_params[0]
             problem_params_coarse = problem_params[1]
-            problem_params_first=problem_params[2]
+            problem_params_first = problem_params[2]
         else:
             problem_params_fine = problem_params
             problem_params_coarse = problem_params
@@ -41,7 +54,7 @@ def SortParams(object):
         else:
             problem_class_coarse = problem_class[1]
             problem_class_coarse_first = problem_class[2]
-            self.sdc_coarse_first_order = sdc_class(
+            self.sdc_coarse_first_model = sdc_class(
                 problem_params_first,
                 collocation_params_coarse,
                 sweeper_params,
@@ -60,14 +73,14 @@ def SortParams(object):
             sweeper_params,
             problem_class_coarse,
         )
-    
+
     @staticmethod
     def get_transfer_matrix_Q(f_nodes, c_nodes):
         approx = LagrangeApproximation(c_nodes)
         return approx.getInterpolationMatrix(f_nodes)
 
-    def standart_restriction(self, U):
+    def restriction_node(self, U):
         return self.Rcoll @ U
 
-    def standart_interpolation(self, U):
+    def interpolation_node(self, U):
         return np.append(U[0], self.Pcoll @ U[1:])

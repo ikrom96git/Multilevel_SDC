@@ -17,7 +17,7 @@ def get_mlsdc_default_params(Force=False, eps=None):
     Examples:
         problem_params, collocation_params, sweeper_params, problem_class = get_mlsdc_default_params(Force=True)
     """
-   
+
     problem_params, *_ = get_harmonic_oscillator_default_params(Force=Force, eps=eps)
     collocation_params = dict()
     collocation_params["quad_type"] = "GAUSS"

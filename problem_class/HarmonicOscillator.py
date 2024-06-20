@@ -18,7 +18,7 @@ class HarmonicOscillator:
         None.
 
         """
-        self.__name__='Harmonic_Oscillator'
+        self.__name__ = "Harmonic_Oscillator"
         self.params = _Pars(problem_params)
         self.determinant = self.params.mu**2 * 0.25 - self.params.kappa
 
@@ -151,7 +151,7 @@ class HarmonicOscillator:
             Bp = 0.0
         else:
             raise (ValueError("Check get_constForce"))
-        
+
         return Ap, Bp, c_omega
 
     def get_forceTerm(self, t, F0, omega_force):

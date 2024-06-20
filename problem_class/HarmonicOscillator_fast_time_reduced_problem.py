@@ -74,5 +74,3 @@ class HarmonicOscillator_fast_time_first_order(object):
         for tt in range(len(time)):
             solution[:, tt] = self.get_exact_solution(time[tt])
         return solution
-    
-    
