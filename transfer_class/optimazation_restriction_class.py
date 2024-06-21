@@ -10,35 +10,37 @@ class OptimationRestriction(transfer_class):
         self.restriction = restrict_nodes
         self.initial_condition = StandartRestriction(restrict_nodes)
 
-    def objective_function_first_order(self, y, y_star, num_nodes):
+    def objective_function_first_order(self, y, y_star, num_nodes, eps):
         return (
             np.linalg.norm(y[:num_nodes] - y_star[:num_nodes]) ** 2
-            + self.eps * np.linalg.norm((y[num_nodes:] - y_star[num_nodes:])) ** 2
+            + eps * np.linalg.norm((y[num_nodes:] - y_star[num_nodes:])) ** 2
         )
 
     def objective_function_zeros_order(self, y, y_star, num_nodes):
         return np.linalg.norm(y[:num_nodes] - y_star[:num_nodes]) ** 2
 
     def arg_minimize(self, U, y_star, num_nodes, eps=None):
-        cons_first = {
-            "type": "eq",
-            "fun": lambda y: y[:num_nodes] + np.sqrt(self.eps) * y[num_nodes:] - U,
-        }
-        cons_zero = {
-            "type": "eq",
-            "fun": lambda y: y[:num_nodes] - U,
-        }
+        
+        
 
         y0 = y_star
         if eps is not None:
+            cons_first = {
+            "type": "eq",
+            "fun": lambda y: y[:num_nodes] + np.sqrt(eps) * y[num_nodes:] - U,
+            }
             min_values = minimize(
                 self.objective_function_first_order,
                 y0,
-                args=(y_star, num_nodes),
-                constraints=cons_first,
+                args=(y_star, num_nodes, eps),
+                # constraints=cons_first,
                 tol=1e-13,
             )
         else:
+            cons_zero = {
+            "type": "eq",
+            "fun": lambda y: y[:num_nodes] - U,
+             }
             min_values = minimize(
                 self.objective_function_zero_order,
                 y0,

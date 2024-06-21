@@ -144,12 +144,14 @@ class sdc_class(object):
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         velocity = V0 + self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
-        position = (
-            X0
-            + self.prob.dt * self.coll.Q @ V0
-            + self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
-        )
-        return velocity, position
+        position = X0+ self.prob.dt * self.coll.Q @ V
+        
+        # position = (
+        #     X0
+        #     + self.prob.dt * self.coll.Q @ V0
+        #     + self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
+        # )
+        return position, velocity
 
     def get_coll_residual(self, X, V, tau_pos, tau_vel):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)

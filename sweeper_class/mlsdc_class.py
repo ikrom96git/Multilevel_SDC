@@ -37,28 +37,25 @@ class Mlsdc_class(SortParams):
                 eps=self.eps
             )
         )
-        X_coarse, V_coarse = self.sdc_coarse_model.sdc_sweep(
+        X_coarse_zero, V_coarse_zero = self.sdc_coarse_model.sdc_sweep(
             X_zero, V_zero, tau_zero_pos, tau_zero_vel
         )
         X_coarse_first, V_coarse_first = self.sdc_coarse_first_model.sdc_sweep(
             X_first, V_first, tau_first_pos, tau_first_vel
         )
 
-        pos_coarse = self.sdc_coarse_first_model.problem_class.asyp_expansion(
-            X_coarse, X_coarse_first, eps=self.eps
-        )
-        vel_coarse = self.sdc_coarse_first_model.problem_class.asyp_expansion(
-            V_coarse, V_coarse_first, eps=self.eps
-        )
-        pos_coarse_expan = self.sdc_coarse_first_model.problem_class.asyp_expansion(
-            X_zero, X_first, eps=self.eps
-        )
-        vel_coarse_expan = self.sdc_coarse_first_model.problem_class.asyp_expansion(
-            V_zero, V_first, eps=self.eps
-        )
-        X_inter = X_old + self.interpolation_node(pos_coarse - pos_coarse_expan)
-        V_inter = V_old + self.interpolation_node(vel_coarse - vel_coarse_expan)
+        X_zero_diff=X_coarse_zero-X_zero
+        V_zero_diff=V_coarse_zero-V_zero
+        X_first_diff=X_coarse_first-X_first
+        V_first_diff=V_coarse_first-V_first
+        
+        X_inter=self.sdc_coarse_first_model.problem_class.asyp_expansion(X_zero_diff, X_first_diff, self.eps)
+        V_inter=self.sdc_coarse_first_model.problem_class.asyp_expansion(V_zero_diff, V_first_diff, self.eps)
+
+        X_inter = X_old + self.interpolation_node(X_inter)
+        V_inter = V_old + self.interpolation_node(V_inter)
         X_fine, V_fine = self.sdc_fine_model.sdc_sweep(X_inter, V_inter)
+        # breakpoint()
         return X_fine, V_fine
 
     def sweep(self, X_old, V_old):

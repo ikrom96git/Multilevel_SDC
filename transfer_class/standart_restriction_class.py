@@ -15,6 +15,7 @@ class StandartRestriction(transfer_class):
         else:
             X_first = (X_fine - X_zero) / eps
             V_first = (V_fine - V_zero) / eps
+            # breakpoint()
             return X_zero, V_zero, X_first, V_first
         
     def fas_correction_zeros(

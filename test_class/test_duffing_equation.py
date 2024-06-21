@@ -21,7 +21,7 @@ from transfer_class.restriction import Restriction
 
 
 
-EPSILON = 1
+EPSILON = 0.1
 problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
     
 def duffing_mlsdc():
@@ -107,7 +107,7 @@ def duffing_minimize_restriction():
         collocation_params,
         sweeper_params,
         problem_class_reduced,
-        OptimazationResidual,
+        OptimationRestriction,
         eps=EPSILON
     )
     model_minimize_mlsdc.get_mlsdc_iter_solution()
@@ -121,6 +121,7 @@ def test_duffing_residual():
     Residual_asymp_mlsdc=model_asymp_mlsdc.sdc_fine_model.get_residual
     Residual_standart_mlsdc=model_standart_mlsdc.sdc_fine_model.get_residual
     Residual_minimize_mlsdc=model_minimize_mlsdc.sdc_fine_model.get_residual
+    # breakpoint()
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
     Title = rf"$\varepsilon={EPSILON}$"
     label_set = [
