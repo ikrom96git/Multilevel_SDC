@@ -4,4 +4,5 @@
 *.npy
 *.csv
 *.txt
+*.cprof
 **/__pycache__/
