@@ -30,6 +30,7 @@ class SortParams(object):
     def get_sorted_params(
         self, problem_params, collocation_params, sweeper_params, problem_class
     ):
+        
 
         if len(problem_params) == 2:
             problem_params_fine = problem_params[0]

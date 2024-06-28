@@ -133,11 +133,15 @@ class sdc_class(object):
             - X
         )
         if None not in tau_pos:
+            # tau_pos_nn = np.append(0, tau_pos[1:] - tau_pos[:-1])
+            # tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
             pos_residual += tau_pos
             vel_residual += tau_vel
-        vel_max_norm = self.max_norm_residual(vel_residual)
-        pos_max_norm = self.max_norm_residual(pos_residual)
-        return [pos_max_norm, vel_max_norm]
+            print('tau correction')
+            # breakpoint()
+        vel_inf_norm =np.linalg.norm(vel_residual, np.inf)
+        pos_inf_norm = np.linalg.norm(pos_residual, np.inf)
+        return [pos_inf_norm, vel_inf_norm]
 
     def compute_integral(self, X, V):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
@@ -145,7 +149,7 @@ class sdc_class(object):
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         velocity = V0 + self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
         position = X0+ self.prob.dt * self.coll.Q @ V
-        
+        # breakpoint()
         # position = (
         #     X0
         #     + self.prob.dt * self.coll.Q @ V0
@@ -164,6 +168,12 @@ class sdc_class(object):
             + self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
             - X
         )
+        if None not in tau_pos:
+            # tau_pos_nn = np.append(0, tau_pos[1:] - tau_pos[:-1])
+            # tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
+            pos_residual += tau_pos
+            vel_residual += tau_vel
+            print('tau correction')
         return pos_residual, vel_residual
 
     def max_norm_residual(self, residual):

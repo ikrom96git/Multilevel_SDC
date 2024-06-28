@@ -1,16 +1,11 @@
 import numpy as np
 
-from default_params.duffing_equation2_default_params import (
-    get_duffing_equation_params,
-    get_duffing_zeros_order_params,
-    get_duffing_first_order_params,
-)
 from default_params.mlsdc_defautl_params import get_mlsdc_default_params
-from problem_class.Duffing_Equation_2 import (
-    DuffingEquation,
-    DuffingEquation_zeros_order_problem,
-    DuffingEquation_first_order_problem,
-)
+from default_params.harmonic_oscillator_default_fast_time_params import get_harmonic_oscillator_params, get_harmonic_oscillator_zeros_order_params,get_harmonic_oscillator_first_order_params
+
+from problem_class.HarmonicOscillator import HarmonicOscillator
+from problem_class.HarmonicOscillator_fast_time_reduced_problem import HarmonicOscillator_fast_time, HarmonicOscillator_fast_time_first_order
+
 from sweeper_class.mlsdc_class import Mlsdc_class
 from plot_class.plot_residual import plot_residual
 from plot_class.plot_solutionvstime import plot_solution
@@ -21,12 +16,12 @@ from transfer_class.restriction import Restriction
 
 
 
-EPSILON = 0.1
+EPSILON = 0.01
 problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
     
 def duffing_mlsdc():
-    problem_duffing_params = get_duffing_equation_params(EPSILON)
-    problem_class_mlsdc = [DuffingEquation, DuffingEquation]
+    problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
+    problem_class_mlsdc = [HarmonicOscillator, HarmonicOscillator]
     model_mlsdc = Mlsdc_class(
         problem_duffing_params,
         collocation_params,
@@ -39,13 +34,13 @@ def duffing_mlsdc():
     return model_mlsdc
 
 def duffing_asymptotic_restriction():
-    problem_duffing_params = get_duffing_equation_params(EPSILON)
-    problem_duffing_zeros_params = get_duffing_zeros_order_params(EPSILON)
-    problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
+    problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
+    problem_duffing_zeros_params = get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_duffing_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
     problem_class_reduced = [
-        DuffingEquation,
-        DuffingEquation_zeros_order_problem,
-        DuffingEquation_first_order_problem,
+        HarmonicOscillator,
+        HarmonicOscillator_fast_time,
+        HarmonicOscillator_fast_time_first_order,
     ]
     problem_params_reduced = [
         problem_duffing_params,
@@ -64,13 +59,13 @@ def duffing_asymptotic_restriction():
     return model_asymp_mlsdc
 
 def duffing_standart_restriction():
-    problem_duffing_params = get_duffing_equation_params(EPSILON)
-    problem_duffing_zeros_params = get_duffing_zeros_order_params(EPSILON)
-    problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
+    problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
+    problem_duffing_zeros_params = get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_duffing_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
     problem_class_reduced = [
-        DuffingEquation,
-        DuffingEquation_zeros_order_problem,
-        DuffingEquation_first_order_problem,
+        HarmonicOscillator,
+        HarmonicOscillator_fast_time,
+        HarmonicOscillator_fast_time_first_order,
     ]
     problem_params_reduced = [
         problem_duffing_params,
@@ -89,13 +84,13 @@ def duffing_standart_restriction():
     return model_standart_mlsdc
 
 def duffing_minimize_restriction():
-    problem_duffing_params = get_duffing_equation_params(EPSILON)
-    problem_duffing_zeros_params = get_duffing_zeros_order_params(EPSILON)
-    problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
+    problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
+    problem_duffing_zeros_params = get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_duffing_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
     problem_class_reduced = [
-        DuffingEquation,
-        DuffingEquation_zeros_order_problem,
-        # DuffingEquation_first_order_problem,
+        HarmonicOscillator,
+        HarmonicOscillator_fast_time,
+        HarmonicOscillator_fast_time_first_order,
     ]
     problem_params_reduced = [
         problem_duffing_params,
@@ -107,23 +102,23 @@ def duffing_minimize_restriction():
         collocation_params,
         sweeper_params,
         problem_class_reduced,
-        OptimazationResidual,
+        OptimationRestriction,
         eps=EPSILON
     )
     model_minimize_mlsdc.get_mlsdc_iter_solution()
     return model_minimize_mlsdc
 def test_duffing_residual():
-    # model_mlsdc=duffing_mlsdc()
+    model_mlsdc=duffing_mlsdc()
     model_asymp_mlsdc=duffing_asymptotic_restriction()
-    # model_standart_mlsdc=duffing_standart_restriction()
+    model_standart_mlsdc=duffing_standart_restriction()
     # model_minimize_mlsdc=duffing_minimize_restriction()
-    Residual_mlsdc=model_mlsdc.sdc_coarse_model.get_residual
-    Residual_asymp_mlsdc=model_asymp_mlsdc.sdc_coarse_first_model.get_residual
-    Residual_standart_mlsdc=model_standart_mlsdc.sdc_coarse_first_model.get_residual
+    Residual_mlsdc=model_mlsdc.sdc_fine_model.get_residual
+    Residual_asymp_mlsdc=model_asymp_mlsdc.sdc_fine_model.get_residual
+    Residual_standart_mlsdc=model_standart_mlsdc.sdc_fine_model.get_residual
     # Residual_minimize_mlsdc=model_minimize_mlsdc.sdc_fine_model.get_residual
     # breakpoint()
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
-    Title = rf"$\varepsilon={EPSILON}$, fine residual"
+    Title = rf"$\varepsilon={EPSILON}$"
     label_set = [
         "MLSDC ",
         "Asymptotic restriction (M3LSDC)",
@@ -142,13 +137,13 @@ def test_duffing_residual():
 def test_duffing_equation_solution():
     EPSILON = 0.1
     problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
-    problem_duffing_params = get_duffing_equation_params(EPSILON)
-    problem_duffing_zeros_params = get_duffing_zeros_order_params(EPSILON)
-    problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
+    problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
+    problem_duffing_zeros_params = get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_duffing_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
     problem_class_reduced = [
-        DuffingEquation,
-        DuffingEquation_zeros_order_problem,
-        DuffingEquation_first_order_problem,
+        HarmonicOscillator,
+        HarmonicOscillator_fast_time,
+        HarmonicOscillator_fast_time_first_order,
     ]
     problem_class = [DuffingEquation, DuffingEquation]
     problem_params_reduced = [problem_duffing_params, problem_duffing_first_params]
@@ -157,7 +152,6 @@ def test_duffing_equation_solution():
         collocation_params,
         sweeper_params,
         problem_class,
-        Restriction,
         eps=EPSILON,
     )
     model_reduced_mlsdc = Mlsdc_class(
@@ -165,12 +159,11 @@ def test_duffing_equation_solution():
         collocation_params,
         sweeper_params,
         problem_class_reduced,
-        AsymptoticRestriction,
         eps=EPSILON,
     )
     mlsdc_pos, mlsdc_vel = model_mlsdc.get_mlsdc_iter_solution()
     mlsdc_reduced_pos, mlsdc_reduced_vel = (
-        model_reduced_mlsdc.get_mlsdc_iter_solution()
+        model_reduced_mlsdc.get_mlsdc_iter_arg_min_first_order()
     )
 
     duffing_zeros_order = DuffingEquation_zeros_order_problem(
@@ -189,7 +182,7 @@ def test_duffing_equation_solution():
     )
     duffing_solution = [duffing_zeros_order_solution[0, :], duffing_pos]
 
-    Time = np.append(0.0, model_mlsdc.sdc_fine_model.coll.nodes)
+    Time = np.append(0.0, model_mlsdc.sdc_fine_level.coll.nodes)
     Title = "Residual MLSDC VS Reduced model with new restiriction operator"
     label_set = ["MLSDC ", "Reduced model"]
     solution_set = [mlsdc_pos, mlsdc_reduced_pos]
@@ -198,5 +191,5 @@ def test_duffing_equation_solution():
 
 
 if __name__ == "__main__":
-    # test_duffing_residual()
-    test_duffing_equation_solution()
+    test_duffing_residual()
+    # test_duffing_equation_solution()

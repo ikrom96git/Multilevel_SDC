@@ -9,7 +9,7 @@ class StandartRestriction(transfer_class):
     def restriction_operator(self, X_fine, V_fine, fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None):
         X_zero = np.append(X_fine[0], self.restrict(X_fine[1:]))
         V_zero = np.append(V_fine[0], self.restrict(V_fine[1:]))
-            
+        # breakpoint()
         if eps is None:
             return X_zero, V_zero
         else:

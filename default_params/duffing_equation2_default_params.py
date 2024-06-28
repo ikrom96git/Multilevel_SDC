@@ -1,6 +1,6 @@
 import numpy as np
 
-dt = 1
+dt = 0.1
 
 
 def get_duffing_equation_params(eps=None):

@@ -205,7 +205,7 @@ class OptimazationResidual(transfer_class):
             "type": "eq",
             "fun": lambda y: y[:num_nodes] - U,
             }
-            breakpoint()
+            # breakpoint()
             min_values = minimize(
                 self.objective_restriction_zeros_order,
                 y0,
