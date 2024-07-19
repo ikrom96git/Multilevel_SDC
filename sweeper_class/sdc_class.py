@@ -9,6 +9,7 @@ class sdc_class(object):
     def __init__(
         self, problem_params, collocation_params, sweeper_params, problem_class
     ):
+        
         self.prob = _Pars(problem_params)
         self.sweeper = _Pars(sweeper_params)
         self.coll = CollocationMatrix(collocation_params)

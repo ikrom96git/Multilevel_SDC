@@ -18,10 +18,11 @@ from transfer_class.standart_restriction_class import StandartRestriction
 from transfer_class.asymptotic_restriction_class import AsymptoticRestriction
 from transfer_class.optimazation_restriction_class import OptimationRestriction, OptimazationResidual
 from transfer_class.restriction import Restriction
+from sweeper_class.sdc_class import sdc_class
+from scipy.integrate import odeint
 
 
-
-EPSILON = 0.1
+EPSILON = 0.9
 problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
     
 def duffing_mlsdc():
@@ -95,7 +96,7 @@ def duffing_minimize_restriction():
     problem_class_reduced = [
         DuffingEquation,
         DuffingEquation_zeros_order_problem,
-        # DuffingEquation_first_order_problem,
+        DuffingEquation_first_order_problem,
     ]
     problem_params_reduced = [
         problem_duffing_params,
@@ -107,32 +108,32 @@ def duffing_minimize_restriction():
         collocation_params,
         sweeper_params,
         problem_class_reduced,
-        OptimazationResidual,
+        OptimationRestriction,
         eps=EPSILON
     )
     model_minimize_mlsdc.get_mlsdc_iter_solution()
     return model_minimize_mlsdc
 def test_duffing_residual():
-    # model_mlsdc=duffing_mlsdc()
-    model_asymp_mlsdc=duffing_asymptotic_restriction()
-    # model_standart_mlsdc=duffing_standart_restriction()
-    # model_minimize_mlsdc=duffing_minimize_restriction()
+    model_mlsdc=duffing_mlsdc()
+    # model_asymp_mlsdc=duffing_asymptotic_restriction()
+    model_standart_mlsdc=duffing_standart_restriction()
+    model_minimize_mlsdc=duffing_minimize_restriction()
     Residual_mlsdc=model_mlsdc.sdc_coarse_model.get_residual
-    Residual_asymp_mlsdc=model_asymp_mlsdc.sdc_coarse_first_model.get_residual
-    Residual_standart_mlsdc=model_standart_mlsdc.sdc_coarse_first_model.get_residual
-    # Residual_minimize_mlsdc=model_minimize_mlsdc.sdc_fine_model.get_residual
+    # Residual_asymp_mlsdc=model_asymp_mlsdc.sdc_coarse_first_model.get_residual
+    Residual_standart_mlsdc=model_standart_mlsdc.sdc_fine_model.get_residual
+    Residual_minimize_mlsdc=model_minimize_mlsdc.sdc_fine_model.get_residual
     # breakpoint()
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
-    Title = rf"$\varepsilon={EPSILON}$, fine residual"
+    Title = rf"$\varepsilon={EPSILON}$, fine-level residual"
     label_set = [
         "MLSDC ",
-        "Asymptotic restriction (M3LSDC)",
+        # "Asymptotic restriction (M3LSDC)",
         # "Arg minimize (M3LSDC)",
         "Standart Restriction (M3LSDC)",
     ]
     residual_set = [
         np.array(Residual_mlsdc)[:, 0],
-        np.array(Residual_asymp_mlsdc)[:, 0],
+        # np.array(Residual_asymp_mlsdc)[:, 0],
         # np.array(Residual_minimize_mlsdc)[:, 0],
         np.array(Residual_standart_mlsdc)[:, 0],
     ]
@@ -140,38 +141,38 @@ def test_duffing_residual():
 
 
 def test_duffing_equation_solution():
-    EPSILON = 0.1
+    EPSILON = 0.001
     problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
     problem_duffing_params = get_duffing_equation_params(EPSILON)
     problem_duffing_zeros_params = get_duffing_zeros_order_params(EPSILON)
     problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
-    problem_class_reduced = [
-        DuffingEquation,
-        DuffingEquation_zeros_order_problem,
-        DuffingEquation_first_order_problem,
-    ]
-    problem_class = [DuffingEquation, DuffingEquation]
-    problem_params_reduced = [problem_duffing_params, problem_duffing_first_params]
-    model_mlsdc = Mlsdc_class(
-        problem_duffing_params,
-        collocation_params,
-        sweeper_params,
-        problem_class,
-        Restriction,
-        eps=EPSILON,
-    )
-    model_reduced_mlsdc = Mlsdc_class(
-        problem_params_reduced,
-        collocation_params,
-        sweeper_params,
-        problem_class_reduced,
-        AsymptoticRestriction,
-        eps=EPSILON,
-    )
-    mlsdc_pos, mlsdc_vel = model_mlsdc.get_mlsdc_iter_solution()
-    mlsdc_reduced_pos, mlsdc_reduced_vel = (
-        model_reduced_mlsdc.get_mlsdc_iter_solution()
-    )
+    # problem_class_reduced = [
+    #     DuffingEquation,
+    #     DuffingEquation_zeros_order_problem,
+    #     DuffingEquation_first_order_problem,
+    # ]
+    # problem_class = [DuffingEquation, DuffingEquation]
+    # problem_params_reduced = [problem_duffing_params, problem_duffing_first_params]
+    # model_mlsdc = Mlsdc_class(
+    #     problem_duffing_params,
+    #     collocation_params,
+    #     sweeper_params,
+    #     problem_class,
+    #     Restriction,
+    #     eps=EPSILON,
+    # )
+    # model_reduced_mlsdc = Mlsdc_class(
+    #     problem_params_reduced,
+    #     collocation_params,
+    #     sweeper_params,
+    #     problem_class_reduced,
+    #     AsymptoticRestriction,
+    #     eps=EPSILON,
+    # )
+    # mlsdc_pos, mlsdc_vel = model_mlsdc.get_mlsdc_iter_solution()
+    # mlsdc_reduced_pos, mlsdc_reduced_vel = (
+    #     model_reduced_mlsdc.get_mlsdc_iter_solution()
+    # )
 
     duffing_zeros_order = DuffingEquation_zeros_order_problem(
         problem_duffing_zeros_params
@@ -187,16 +188,51 @@ def test_duffing_equation_solution():
         duffing_first_order_solution[0, :],
         eps=EPSILON,
     )
-    duffing_solution = [duffing_zeros_order_solution[0, :], duffing_pos]
-
-    Time = np.append(0.0, model_mlsdc.sdc_fine_model.coll.nodes)
-    Title = "Residual MLSDC VS Reduced model with new restiriction operator"
-    label_set = ["MLSDC ", "Reduced model"]
-    solution_set = [mlsdc_pos, mlsdc_reduced_pos]
+    y0=[0, 2]
+    omega=1
+    
+    sol=odeint(duffing_rhs, y0, time, args=(EPSILON, omega))
+    duffing_solution = [sol[:, 0], duffing_zeros_order_solution[0, :], duffing_pos]
+    # Time = np.append(0.0, model_mlsdc.sdc_fine_model.coll.nodes)
+    Title = rf"Duffing equation solution $\varepsilon={EPSILON}$"
+    label_set = ['odeint', "Zeros order", "First order"]
+    # solution_set = [mlsdc_pos, mlsdc_reduced_pos]
     # plot_solution(Time, solution_set, Title, label_set)
     plot_solution(time, duffing_solution, Title, label_set)
 
+def duffing_rhs(y, t, eps, omega):
+    x, v=y
+    dydt=[v, -omega**2*x+eps*(v**2)*x]
+    return dydt
+def duffing_eqation_sdc():
+    problem_duffing_params = get_duffing_equation_params(EPSILON)
+    collocation_params['num_nodes']=5
+    model_sdc = sdc_class(
+        problem_duffing_params,
+        collocation_params,
+        sweeper_params,
+        DuffingEquation
+    )
+    model_sdc.sdc_iter()
+    return model_sdc
+def test_sdc_vs_mlsdc():
+    model_mlsdc=duffing_mlsdc()
+    model_sdc=duffing_eqation_sdc()
+    Residual_mlsdc=model_mlsdc.sdc_fine_model.get_residual
+    Residual_sdc=model_sdc.get_residual
+    Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
+    Title = rf"$\varepsilon={EPSILON}$"
+    label_set = [
+        "SDC ",
+        "MLSDC"
+    ]
+    residual_set = [
+        np.array(Residual_sdc)[:, 0],
+        np.array(Residual_mlsdc)[:, 0],
+        ]
+    plot_residual(Kiter, residual_set, Title, label_set)
 
 if __name__ == "__main__":
-    # test_duffing_residual()
-    test_duffing_equation_solution()
+    test_duffing_residual()
+    # test_duffing_equation_solution()
+    # test_sdc_vs_mlsdc()

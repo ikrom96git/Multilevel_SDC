@@ -18,7 +18,7 @@ class AsymptoticRestriction(transfer_class):
         else:
             V_zeros=np.ones(len(V))*V[0]-dt_coarse*fine_model.coll.Q@(fine_model.prob.omega**2*X)+dt_coarse*fine_model.coll.Q@(eps*(V**2)*X)
             X_first=(X-X_zeros)/eps
-            V_first=(V-V_zeros)/eps
+            V_first=(V-V_zeros)/eps 
         # breakpoint()
         return X_zeros, V_zeros
     def restriction_operator(self, X_fine, V_fine, fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None):

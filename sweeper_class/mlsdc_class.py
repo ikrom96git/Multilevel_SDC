@@ -39,13 +39,13 @@ class Mlsdc_class(SortParams):
                 eps=self.eps
             )
         )
-        for ii in range(10):
-            X_coarse_zero, V_coarse_zero = self.sdc_coarse_model.sdc_sweep(
-                X_zero, V_zero, tau_zero_pos, tau_zero_vel
-            )
-            X_coarse_first, V_coarse_first = self.sdc_coarse_first_model.sdc_sweep(
-                X_first, V_first, tau_first_pos, tau_first_vel
-            )
+    
+        X_coarse_zero, V_coarse_zero = self.sdc_coarse_model.sdc_sweep(
+            X_zero, V_zero, tau_zero_pos, tau_zero_vel
+        )
+        X_coarse_first, V_coarse_first = self.sdc_coarse_first_model.sdc_sweep(
+            X_first, V_first, tau_first_pos, tau_first_vel
+        )
 
         X_zero_diff=X_coarse_zero-X_zero
         V_zero_diff=V_coarse_zero-V_zero
