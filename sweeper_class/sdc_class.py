@@ -9,7 +9,7 @@ class sdc_class(object):
     def __init__(
         self, problem_params, collocation_params, sweeper_params, problem_class
     ):
-        
+
         self.prob = _Pars(problem_params)
         self.sweeper = _Pars(sweeper_params)
         self.coll = CollocationMatrix(collocation_params)
@@ -138,9 +138,9 @@ class sdc_class(object):
             # tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
             pos_residual += tau_pos
             vel_residual += tau_vel
-            print('tau correction')
+            print("tau correction")
             # breakpoint()
-        vel_inf_norm =np.linalg.norm(vel_residual, np.inf)
+        vel_inf_norm = np.linalg.norm(vel_residual, np.inf)
         pos_inf_norm = np.linalg.norm(pos_residual, np.inf)
         return [pos_inf_norm, vel_inf_norm]
 
@@ -149,7 +149,7 @@ class sdc_class(object):
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         velocity = V0 + self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
-        position = X0+ self.prob.dt * self.coll.Q @ V
+        position = X0 + self.prob.dt * self.coll.Q @ V
         # breakpoint()
         # position = (
         #     X0
@@ -174,47 +174,46 @@ class sdc_class(object):
             # tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
             pos_residual += tau_pos
             vel_residual += tau_vel
-            print('tau correction')
+            print("tau correction")
         return pos_residual, vel_residual
 
     def max_norm_residual(self, residual):
         return np.max(np.abs(residual))
 
     def get_collocation_fsolve(self):
-        X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes)
-        V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes)
+        X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
+        V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         U0 = np.concatenate([X0, V0])
         U = fsolve(self.get_collocation_problem, U0)
         X, V = np.split(U, 2)
-        X = np.append(self.prob.u0[0], X)
-        V = np.append(self.prob.u0[1], V)
+        # X = X
+        # V = V
         return X, V
 
     def get_collocation_problem(self, U):
-        T = self.prob.dt * self.coll.nodes
+        T = self.prob.dt * np.append(0, self.coll.nodes)
         ret = []
 
-        for ii in range(self.coll.num_nodes):
-            Y = np.array([U[ii], U[self.coll.num_nodes + ii]])
+        for ii in range(self.coll.num_nodes + 1):
+            Y = np.array([U[ii], U[self.coll.num_nodes + 1 + ii]])
+            print(Y)
             pos_equation = np.zeros([1])
             vel_equation = np.zeros([1])
-            for jj in range(self.coll.num_nodes):
-                X = np.array([U[jj], U[self.coll.num_nodes + jj]])
+            for jj in range(self.coll.num_nodes + 1):
+                X = np.array([U[jj], U[self.coll.num_nodes + 1 + jj]])
                 pos_equation += (
-                    -self.prob.dt * self.coll.Q[ii + 1, jj + 1] * self.prob.u0[1]
+                    -self.prob.dt * self.coll.Q[ii, jj] * self.prob.u0[1]
                     - self.prob.dt**2
-                    * self.coll.QQ[ii + 1, jj + 1]
+                    * self.coll.QQ[ii, jj]
                     * self.get_rhs(X, t=T[jj])[1]
                 )
                 vel_equation += (
-                    -self.prob.dt
-                    * self.coll.Q[ii + 1, jj + 1]
-                    * self.get_rhs(X, t=T[jj])[1]
+                    -self.prob.dt * self.coll.Q[ii, jj] * self.get_rhs(X, t=T[jj])[1]
                 )
 
             equation = np.concatenate([pos_equation, vel_equation])
             ret = np.append(ret, Y - self.prob.u0 + equation)
-
+        # TODO: Residual solution is not correct. Check the residual solution
         return ret
 
     def get_initial_guess(self, initial_guess=None):

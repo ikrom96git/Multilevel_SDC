@@ -1,6 +1,8 @@
 import numpy as np
 
-dt=0.01
+dt = 0.01
+
+
 def get_harmonic_oscillator_params(eps=None):
     kappa_hat = 0.8
     problem_params = dict()
@@ -12,6 +14,7 @@ def get_harmonic_oscillator_params(eps=None):
     problem_params["dt"] = dt
     time = np.linspace(0, 30, 1000)
     return problem_params
+
 
 def get_harmonic_oscillator_zeros_order_params(eps=None):
 
@@ -34,6 +37,8 @@ def get_harmonic_oscillator_zeros_order_params(eps=None):
     #     problem_params["dt"] = 0.5
     #     time = np.linspace(0, 30, 1000)
     return problem_params
+
+
 def get_harmonic_oscillator_first_order_params(eps=None):
 
     problem_params = dict()

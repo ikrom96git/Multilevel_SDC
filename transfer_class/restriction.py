@@ -7,10 +7,18 @@ class Restriction(transfer_class):
     def __init__(self, restrict_nodes):
         self.restrict = restrict_nodes
 
-    def restriction_operator(self, X_fine, V_fine,fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None):
+    def restriction_operator(
+        self,
+        X_fine,
+        V_fine,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
+    ):
         X_coarse = np.append(X_fine[0], self.restrict(X_fine[1:]))
         V_coarse = np.append(V_fine[0], self.restrict(V_fine[1:]))
-        
+
         return X_coarse, V_coarse
 
     def fas_correction_operator(

@@ -17,7 +17,13 @@ class AveragingRestriction(transfer_class):
         return (1 / np.sqrt(self.eps)) * (U - U_averaged)
 
     def restriction_operator(
-        self, X_fine, V_fine, fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None
+        self,
+        X_fine,
+        V_fine,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
     ):
         X_averaged = self.averaging_over_time(X_fine[1:], level=fine_model)
         V_averaged = self.averaging_over_time(V_fine[1:], level=fine_model)
@@ -33,7 +39,9 @@ class AveragingRestriction(transfer_class):
     def fas_correction_zeros(
         self, X, V, fine_prob=None, coarse_zeros_model=None, eps=None
     ):
-        X_zero, V_zero = self.restriction_operator(X, V, fine_model=fine_prob, coarse_zero_model=coarse_zeros_model)
+        X_zero, V_zero = self.restriction_operator(
+            X, V, fine_model=fine_prob, coarse_zero_model=coarse_zeros_model
+        )
         Rfine_pos, Rfine_vel = fine_prob.collocation_operator(X, V)
 
         Rcoarse_zeros_pos, Rcoarse_zeros_vel = coarse_zeros_model.collocation_operator(
@@ -41,7 +49,10 @@ class AveragingRestriction(transfer_class):
         )
 
         Rfine_zeros_pos, Rfine_zeros_vel = self.restriction_operator(
-            Rfine_pos, Rfine_vel, fine_model=fine_prob, coarse_zero_model=coarse_zeros_model
+            Rfine_pos,
+            Rfine_vel,
+            fine_model=fine_prob,
+            coarse_zero_model=coarse_zeros_model,
         )
         tau_pos_zeros = Rcoarse_zeros_pos - Rfine_zeros_pos
         tau_vel_zeros = Rcoarse_zeros_vel - Rfine_zeros_vel
@@ -71,7 +82,11 @@ class AveragingRestriction(transfer_class):
         )
         Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel = (
             self.restriction_operator(
-                Rfine_pos, Rfine_vel, fine_model=fine_prob, coarse_zero_model=coarse_zeros_model, eps=eps
+                Rfine_pos,
+                Rfine_vel,
+                fine_model=fine_prob,
+                coarse_zero_model=coarse_zeros_model,
+                eps=eps,
             )
         )
         tau_pos_zeros = Rcoarse_zeros_pos - Rfine_zeros_pos

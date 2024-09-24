@@ -1,9 +1,10 @@
 import numpy as np
 
 dt = 0.4
+eps = 0.1
 
 
-def get_duffing_equation_params(eps=None):
+def get_duffing_equation_params():
     problem_params = dict()
     problem_params["omega"] = 1.0
     problem_params["eps"] = eps
@@ -13,7 +14,7 @@ def get_duffing_equation_params(eps=None):
     return problem_params
 
 
-def get_duffing_zeros_order_params(eps=None):
+def get_duffing_zeros_order_params():
     problem_params = dict()
     problem_params["omega"] = 1.0
     problem_params["eps"] = eps
@@ -23,7 +24,7 @@ def get_duffing_zeros_order_params(eps=None):
     return problem_params
 
 
-def get_duffing_first_order_params(eps=None):
+def get_duffing_first_order_params():
     problem_params = dict()
     problem_params["omega"] = 1.0
     problem_params["eps"] = eps

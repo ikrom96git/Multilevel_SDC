@@ -1,24 +1,34 @@
 import numpy as np
 
 from default_params.mlsdc_defautl_params import get_mlsdc_default_params
-from default_params.harmonic_oscillator_default_fast_time_params import get_harmonic_oscillator_params, get_harmonic_oscillator_zeros_order_params,get_harmonic_oscillator_first_order_params
+from default_params.harmonic_oscillator_default_fast_time_params import (
+    get_harmonic_oscillator_params,
+    get_harmonic_oscillator_zeros_order_params,
+    get_harmonic_oscillator_first_order_params,
+)
 
 from problem_class.HarmonicOscillator import HarmonicOscillator
-from problem_class.HarmonicOscillator_fast_time_reduced_problem import HarmonicOscillator_fast_time, HarmonicOscillator_fast_time_first_order
+from problem_class.HarmonicOscillator_fast_time_reduced_problem import (
+    HarmonicOscillator_fast_time,
+    HarmonicOscillator_fast_time_first_order,
+)
 
 from sweeper_class.mlsdc_class import Mlsdc_class
 from plot_class.plot_residual import plot_residual
 from plot_class.plot_solutionvstime import plot_solution
 from transfer_class.standart_restriction_class import StandartRestriction
 from transfer_class.asymptotic_restriction_class import AsymptoticRestriction
-from transfer_class.optimazation_restriction_class import OptimationRestriction, OptimazationResidual
+from transfer_class.optimazation_restriction_class import (
+    OptimationRestriction,
+    OptimazationResidual,
+)
 from transfer_class.restriction import Restriction
-
 
 
 EPSILON = 0.01
 problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
-    
+
+
 def duffing_mlsdc():
     problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
     problem_class_mlsdc = [HarmonicOscillator, HarmonicOscillator]
@@ -32,6 +42,7 @@ def duffing_mlsdc():
     )
     model_mlsdc.get_mlsdc_iter_solution()
     return model_mlsdc
+
 
 def duffing_asymptotic_restriction():
     problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
@@ -58,6 +69,7 @@ def duffing_asymptotic_restriction():
     model_asymp_mlsdc.get_mlsdc_iter_solution()
     return model_asymp_mlsdc
 
+
 def duffing_standart_restriction():
     problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
     problem_duffing_zeros_params = get_harmonic_oscillator_zeros_order_params(EPSILON)
@@ -78,10 +90,11 @@ def duffing_standart_restriction():
         sweeper_params,
         problem_class_reduced,
         StandartRestriction,
-        eps=EPSILON
+        eps=EPSILON,
     )
     model_standart_mlsdc.get_mlsdc_iter_solution()
     return model_standart_mlsdc
+
 
 def duffing_minimize_restriction():
     problem_duffing_params = get_harmonic_oscillator_params(EPSILON)
@@ -103,18 +116,20 @@ def duffing_minimize_restriction():
         sweeper_params,
         problem_class_reduced,
         OptimationRestriction,
-        eps=EPSILON
+        eps=EPSILON,
     )
     model_minimize_mlsdc.get_mlsdc_iter_solution()
     return model_minimize_mlsdc
+
+
 def test_duffing_residual():
-    model_mlsdc=duffing_mlsdc()
-    model_asymp_mlsdc=duffing_asymptotic_restriction()
-    model_standart_mlsdc=duffing_standart_restriction()
+    model_mlsdc = duffing_mlsdc()
+    model_asymp_mlsdc = duffing_asymptotic_restriction()
+    model_standart_mlsdc = duffing_standart_restriction()
     # model_minimize_mlsdc=duffing_minimize_restriction()
-    Residual_mlsdc=model_mlsdc.sdc_fine_model.get_residual
-    Residual_asymp_mlsdc=model_asymp_mlsdc.sdc_fine_model.get_residual
-    Residual_standart_mlsdc=model_standart_mlsdc.sdc_fine_model.get_residual
+    Residual_mlsdc = model_mlsdc.sdc_fine_model.get_residual
+    Residual_asymp_mlsdc = model_asymp_mlsdc.sdc_fine_model.get_residual
+    Residual_standart_mlsdc = model_standart_mlsdc.sdc_fine_model.get_residual
     # Residual_minimize_mlsdc=model_minimize_mlsdc.sdc_fine_model.get_residual
     # breakpoint()
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)

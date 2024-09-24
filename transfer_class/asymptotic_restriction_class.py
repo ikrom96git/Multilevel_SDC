@@ -6,23 +6,47 @@ class AsymptoticRestriction(transfer_class):
 
     def __init__(self, restrict_nodes):
         self.restriction_node = restrict_nodes
-    def restriction_operator1(self, X, V, fine_model=None, coarse_zero_model=None, coarse_first_model=None, eps=None):
-        T=fine_model.prob.dt*np.append(0, fine_model.coll.nodes)
-        dt_coarse=fine_model.prob.dt
-        X_zeros=np.ones(len(X))*X[0]+dt_coarse*fine_model.coll.Q@V
-        duffin2=True
+
+    def restriction_operator1(
+        self,
+        X,
+        V,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
+    ):
+        T = fine_model.prob.dt * np.append(0, fine_model.coll.nodes)
+        dt_coarse = fine_model.prob.dt
+        X_zeros = np.ones(len(X)) * X[0] + dt_coarse * fine_model.coll.Q @ V
+        duffin2 = True
         if not duffin2:
-            V_zeros=np.ones(len(V))*V[0]-dt_coarse*fine_model.coll.Q@(fine_model.prob.omega**2*X)
-            print('Something')
+            V_zeros = np.ones(len(V)) * V[0] - dt_coarse * fine_model.coll.Q @ (
+                fine_model.prob.omega**2 * X
+            )
+            print("Something")
 
         else:
-            V_zeros=np.ones(len(V))*V[0]-dt_coarse*fine_model.coll.Q@(fine_model.prob.omega**2*X)+dt_coarse*fine_model.coll.Q@(eps*(V**2)*X)
-            X_first=(X-X_zeros)/eps
-            V_first=(V-V_zeros)/eps 
+            V_zeros = (
+                np.ones(len(V)) * V[0]
+                - dt_coarse * fine_model.coll.Q @ (fine_model.prob.omega**2 * X)
+                + dt_coarse * fine_model.coll.Q @ (eps * (V**2) * X)
+            )
+            X_first = (X - X_zeros) / eps
+            V_first = (V - V_zeros) / eps
         # breakpoint()
         return X_zeros, V_zeros
-    def restriction_operator(self, X_fine, V_fine, fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None):
-        
+
+    def restriction_operator(
+        self,
+        X_fine,
+        V_fine,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
+    ):
+
         X_zero, V_zero = fine_model.compute_integral(X_fine, V_fine)
         # breakpoint()
         if eps is None:
@@ -72,7 +96,13 @@ class AsymptoticRestriction(transfer_class):
             X_first, V_first, V0=V0first_order
         )
         Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel = (
-            self.restriction_operator(Rfine_pos, Rfine_vel, fine_model=fine_prob, coarse_zero_model=coarse_zeros_model, eps=eps)
+            self.restriction_operator(
+                Rfine_pos,
+                Rfine_vel,
+                fine_model=fine_prob,
+                coarse_zero_model=coarse_zeros_model,
+                eps=eps,
+            )
         )
         tau_pos_zeros = Rcoarse_zeros_pos - Rfine_zeros_pos
         tau_vel_zeros = Rcoarse_zeros_vel - Rfine_zeros_vel

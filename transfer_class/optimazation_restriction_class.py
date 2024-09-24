@@ -20,14 +20,12 @@ class OptimationRestriction(transfer_class):
         return np.linalg.norm(y[:num_nodes] - y_star[:num_nodes]) ** 2
 
     def arg_minimize(self, U, y_star, num_nodes, eps=None):
-        
-        
 
         y0 = y_star
         if eps is not None:
             cons_first = {
-            "type": "eq",
-            "fun": lambda y: y[:num_nodes] + np.sqrt(eps) * y[num_nodes:] - U,
+                "type": "eq",
+                "fun": lambda y: y[:num_nodes] + np.sqrt(eps) * y[num_nodes:] - U,
             }
             min_values = minimize(
                 self.objective_function_first_order,
@@ -38,9 +36,9 @@ class OptimationRestriction(transfer_class):
             )
         else:
             cons_zero = {
-            "type": "eq",
-            "fun": lambda y: y[:num_nodes] - U,
-             }
+                "type": "eq",
+                "fun": lambda y: y[:num_nodes] - U,
+            }
             min_values = minimize(
                 self.objective_function_zero_order,
                 y0,
@@ -75,7 +73,15 @@ class OptimationRestriction(transfer_class):
         V_zero = np.split(self.arg_minimize(V_fine, V_star, 6), 2)
         return X_zero, V_zero
 
-    def restriction_operator(self, X_fine, V_fine, fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None):
+    def restriction_operator(
+        self,
+        X_fine,
+        V_fine,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
+    ):
         if eps is None:
             return self.restriction_zero_order(X_fine, V_fine)
         else:
@@ -117,7 +123,7 @@ class OptimationRestriction(transfer_class):
             X_first, V_first, V0=V0first_order
         )
         Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel = (
-            self.restriction_operator(Rfine_pos, Rfine_vel,eps= eps)
+            self.restriction_operator(Rfine_pos, Rfine_vel, eps=eps)
         )
         tau_pos_zeros = Rcoarse_zeros_pos - Rfine_zeros_pos
         tau_vel_zeros = Rcoarse_zeros_vel - Rfine_zeros_vel
@@ -185,14 +191,14 @@ class OptimazationResidual(transfer_class):
         coarse_first_model=None,
         eps=None,
     ):
-        
+
         y0 = y_star
         if eps is not None:
             cons_first = {
-            "type": "eq",
-            "fun": lambda y: y[:2*num_nodes] + eps * y[2*num_nodes:] - U,
+                "type": "eq",
+                "fun": lambda y: y[: 2 * num_nodes] + eps * y[2 * num_nodes :] - U,
             }
-            
+
             min_values = minimize(
                 self.objective_restriction_first_order,
                 y0,
@@ -202,8 +208,8 @@ class OptimazationResidual(transfer_class):
             )
         else:
             cons_zero = {
-            "type": "eq",
-            "fun": lambda y: y[:num_nodes] - U,
+                "type": "eq",
+                "fun": lambda y: y[:num_nodes] - U,
             }
             # breakpoint()
             min_values = minimize(
@@ -226,8 +232,10 @@ class OptimazationResidual(transfer_class):
         X_zero_average, V_zero_average, X_first_average, V_first_average = (
             self.initial_condition.restriction_operator(X_fine, V_fine, eps=eps)
         )
-        U=np.block([X_fine, V_fine])
-        U_star = np.block([X_zero_average, V_zero_average, X_first_average, V_first_average])
+        U = np.block([X_fine, V_fine])
+        U_star = np.block(
+            [X_zero_average, V_zero_average, X_first_average, V_first_average]
+        )
         X_zero, V_zero, X_first, V_first = np.split(
             self.arg_minimize_restriction(
                 U, U_star, 6, coarse_zero_model, coarse_first_model, eps
@@ -251,7 +259,13 @@ class OptimazationResidual(transfer_class):
         return X_zero, V_zero
 
     def restriction_operator(
-        self, X_fine, V_fine,fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None
+        self,
+        X_fine,
+        V_fine,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
     ):
         if eps is None:
             return self.restriction_zero_order(X_fine, V_fine, coarse_zero_model)
@@ -261,7 +275,9 @@ class OptimazationResidual(transfer_class):
             )
 
     def fas_correction_zeros(self, X, V, fine_prob=None, coarse_zeros_model=None):
-        X_zero, V_zero = self.restriction_operator(X, V, coarse_zero_model=coarse_zeros_model)
+        X_zero, V_zero = self.restriction_operator(
+            X, V, coarse_zero_model=coarse_zeros_model
+        )
         Rfine_pos, Rfine_vel = fine_prob.collocation_operator(X, V)
 
         Rcoarse_zeros_pos, Rcoarse_zeros_vel = coarse_zeros_model.collocation_operator(
@@ -285,7 +301,11 @@ class OptimazationResidual(transfer_class):
         eps=None,
     ):
         X_zero, V_zero, X_first, V_first = self.restriction_operator(
-            X, V, coarse_zero_model=coarse_zeros_model, coarse_first_model=coarse_first_model, eps=eps
+            X,
+            V,
+            coarse_zero_model=coarse_zeros_model,
+            coarse_first_model=coarse_first_model,
+            eps=eps,
         )
         Rfine_pos, Rfine_vel = fine_prob.collocation_operator(X, V)
 
@@ -299,7 +319,11 @@ class OptimazationResidual(transfer_class):
         )
         Rfine_zeros_pos, Rfine_zeros_vel, Rfine_first_pos, Rfine_first_vel = (
             self.restriction_operator(
-                Rfine_pos, Rfine_vel, coarse_zero_model=coarse_zeros_model, coarse_first_model=coarse_first_model, eps=eps
+                Rfine_pos,
+                Rfine_vel,
+                coarse_zero_model=coarse_zeros_model,
+                coarse_first_model=coarse_first_model,
+                eps=eps,
             )
         )
         tau_pos_zeros = Rcoarse_zeros_pos - Rfine_zeros_pos

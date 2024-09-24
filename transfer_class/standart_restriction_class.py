@@ -6,7 +6,15 @@ class StandartRestriction(transfer_class):
     def __init__(self, restrict_nodes):
         self.restrict = restrict_nodes
 
-    def restriction_operator(self, X_fine, V_fine, fine_model=None,  coarse_zero_model=None, coarse_first_model=None, eps=None):
+    def restriction_operator(
+        self,
+        X_fine,
+        V_fine,
+        fine_model=None,
+        coarse_zero_model=None,
+        coarse_first_model=None,
+        eps=None,
+    ):
         X_zero = np.append(X_fine[0], self.restrict(X_fine[1:]))
         V_zero = np.append(V_fine[0], self.restrict(V_fine[1:]))
         # breakpoint()
@@ -17,10 +25,8 @@ class StandartRestriction(transfer_class):
             V_first = (V_fine - V_zero) / eps
             # breakpoint()
             return X_zero, V_zero, X_first, V_first
-        
-    def fas_correction_zeros(
-        self, X, V, fine_prob=None, coarse_zeros_model=None
-    ):
+
+    def fas_correction_zeros(self, X, V, fine_prob=None, coarse_zeros_model=None):
         X_zero, V_zero = self.restriction_operator(X, V)
         Rfine_pos, Rfine_vel = fine_prob.collocation_operator(X, V)
 
@@ -42,7 +48,7 @@ class StandartRestriction(transfer_class):
         fine_prob=None,
         coarse_zeros_model=None,
         coarse_first_model=None,
-        eps=None
+        eps=None,
     ):
         X_zero, V_zero, X_first, V_first = self.restriction_operator(X, V, eps=eps)
         Rfine_pos, Rfine_vel = fine_prob.collocation_operator(X, V)
@@ -83,5 +89,6 @@ class StandartRestriction(transfer_class):
                 V,
                 fine_prob=fine_prob,
                 coarse_zeros_model=coarse_zeros_model,
-                coarse_first_model=coarse_first_model,eps=eps
+                coarse_first_model=coarse_first_model,
+                eps=eps,
             )
