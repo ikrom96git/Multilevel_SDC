@@ -6,9 +6,11 @@ from plot_class.plot_residual import plot_residual
 from default_params.sdc_default_params import get_sdc_default_params
 from default_params.duffing_equation2_default_params import get_duffing_equation_params
 
+EPSILON = 0.1
+
 
 def test_sdc_duffing_eqaution():
-    problem_params = get_duffing_equation_params()
+    problem_params = get_duffing_equation_params(eps=EPSILON)
     *_, collocation_params, sweeper_params, problem_class = get_sdc_default_params()
     model = sdc_class(
         problem_params, collocation_params, sweeper_params, DuffingEquation
@@ -24,7 +26,7 @@ def test_sdc_duffing_eqaution():
 
 
 def test_sdc_residual(Force=False):
-    problem_params = get_duffing_equation_params()
+    problem_params = get_duffing_equation_params(eps=EPSILON)
     *_, collocation_params, sweeper_params, problem_class = get_sdc_default_params(
         Force=Force
     )
@@ -42,7 +44,7 @@ def test_sdc_residual(Force=False):
 
 
 def test_collocation_problem():
-    problem_params = get_duffing_equation_params()
+    problem_params = get_duffing_equation_params(eps=EPSILON)
     *_, collocation_params, sweeper_params, problem_class = get_sdc_default_params(
         Force=True
     )
@@ -61,7 +63,7 @@ def test_collocation_problem():
 
 
 def test_sdc_with_collocation_residual(Force=True):
-    problem_params = get_duffing_equation_params()
+    problem_params = get_duffing_equation_params(eps=EPSILON)
     *_, collocation_params, sweeper_params, problem_class = get_sdc_default_params(
         Force=Force
     )

@@ -1,15 +1,12 @@
 import numpy as np
 from default_params.mlsdc_defautl_params import get_mlsdc_default_params
 from default_params.sdc_default_params import get_sdc_default_params
-from default_params.harmonic_oscillator_default_fast_time_params import (
-    get_harmonic_oscillator_fast_time_params,
-)
 from sweeper_class.mlsdc_class import Mlsdc_class
 from sweeper_class.sdc_class import sdc_class
-from problem_class.HarmonicOscillator import HarmonicOscillator
-from problem_class.HarmonicOscillator_fast_time_reduced_problem import (
-    HarmonicOscillator_fast_time,
-    HarmonicOscillator_fast_time_first_order,
+from problem_class.Duffing_Equation_2 import (
+    DuffingEquation,
+    DuffingEquation_zeros_order_problem,
+    DuffingEquation_first_order_problem,
 )
 from plot_class.plot_solutionvstime import plot_solution
 from plot_class.plot_residual import plot_residual
