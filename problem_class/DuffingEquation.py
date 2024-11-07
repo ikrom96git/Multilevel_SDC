@@ -26,10 +26,16 @@ class DuffingEquation(object):
         return np.asarray([x_dot, v_dot])
 
     def get_exact_solution(self, t):
-        pass
+        a=self.params.u0[0]
+        z=self.params.omega*t
+        compute=(self.params.eps/16*self.params.omega**2)*(a**3*self.params.b*np.sin(z))
+        return a*np.cos(z)-compute*(np.sin(2*z)+6*z)
 
     def get_ntime_exact_solution(self, time):
-        pass
+        solution = np.zeros(len(time))
+        for tt in range(len(time)):
+            solution[tt] = self.get_exact_solution(time[tt])
+        return solution
 
 
 class DuffingEquation_zeros_order_problem(object):

@@ -1,12 +1,12 @@
 import numpy as np
 
-from default_params.duffing_equation2_default_params import (
+from default_params.duffing_equation_default_params import (
     get_duffing_equation_params,
     get_duffing_zeros_order_params,
     get_duffing_first_order_params,
 )
 from default_params.mlsdc_defautl_params import get_mlsdc_default_params
-from problem_class.Duffing_Equation_2 import (
+from problem_class.DuffingEquation import (
     DuffingEquation,
     DuffingEquation_zeros_order_problem,
     DuffingEquation_first_order_problem,
@@ -150,7 +150,7 @@ def test_duffing_residual():
 
 
 def test_duffing_equation_solution():
-    EPSILON = 0.001
+    EPSILON = 0.1
     problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
     problem_duffing_params = get_duffing_equation_params(EPSILON)
     problem_duffing_zeros_params = get_duffing_zeros_order_params(EPSILON)
@@ -189,22 +189,24 @@ def test_duffing_equation_solution():
     duffing_first_order = DuffingEquation_first_order_problem(
         problem_duffing_first_params
     )
+    duffing_equation=DuffingEquation(problem_duffing_params)
     time = np.linspace(0, 2 * np.pi, 1000)
     duffing_zeros_order_solution = duffing_zeros_order.get_ntime_exact_solution(time)
     duffing_first_order_solution = duffing_first_order.get_ntime_exact_solution(time)
+    duffing_asymptotic_solution=duffing_equation.get_ntime_exact_solution(time)
     duffing_pos = duffing_first_order.asyp_expansion(
         duffing_zeros_order_solution[0, :],
         duffing_first_order_solution[0, :],
         eps=EPSILON,
     )
-    y0 = [0, 2]
+    y0 = [2, 0]
     omega = 1
 
     sol = odeint(duffing_rhs, y0, time, args=(EPSILON, omega))
-    duffing_solution = [sol[:, 0], duffing_zeros_order_solution[0, :], duffing_pos]
+    duffing_solution = [sol[:, 0], duffing_zeros_order_solution[0, :], duffing_pos, duffing_asymptotic_solution]
     # Time = np.append(0.0, model_mlsdc.sdc_fine_model.coll.nodes)
     Title = rf"Duffing equation solution $\varepsilon={EPSILON}$"
-    label_set = ["odeint", "Zeros order", "First order"]
+    label_set = ["odeint", "Zeros order", "First order", "Asymptotic"]
     # solution_set = [mlsdc_pos, mlsdc_reduced_pos]
     # plot_solution(Time, solution_set, Title, label_set)
     plot_solution(time, duffing_solution, Title, label_set)
@@ -212,7 +214,7 @@ def test_duffing_equation_solution():
 
 def duffing_rhs(y, t, eps, omega):
     x, v = y
-    dydt = [v, -(omega**2) * x + eps * (v**2) * x]
+    dydt = [v, -(omega**2) * x - eps  * omega*x**3]
     return dydt
 
 
@@ -242,6 +244,6 @@ def test_sdc_vs_mlsdc():
 
 
 if __name__ == "__main__":
-    test_duffing_residual()
-    # test_duffing_equation_solution()
+    # test_duffing_residual()
+    test_duffing_equation_solution()
     # test_sdc_vs_mlsdc()
