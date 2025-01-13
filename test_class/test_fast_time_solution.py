@@ -2,7 +2,7 @@ import numpy as np
 from plot_class.plot_solutionvstime import plot_solution
 from plot_class.plot_residual import plot_residual
 from default_params.harmonic_oscillator_default_fast_time_params import (
-    get_harmonic_oscillator_fast_time_params,
+    get_harmonic_oscillator_params, get_harmonic_oscillator_zeros_order_params, get_harmonic_oscillator_first_order_params
 )
 from default_params.harmonic_oscillator_reduced_order_model_params import (
     get_harmonic_oscillator_reduced_model_params,
@@ -23,16 +23,16 @@ def test_compare_solution_fast_time_reduced():
     prob_reduced_model_params, time_reduced = (
         get_harmonic_oscillator_reduced_model_params()
     )
-    prob_fast_time_params, time_fast = get_harmonic_oscillator_fast_time_params(
-        Fast_time=True
+    prob_fast_time_params, time_fast = get_harmonic_oscillator_params(
+        eps=0.001
     )
     model_reduced = HarmonicOscillator(prob_reduced_model_params)
     model_fast_time = HarmonicOscillator_fast_time(prob_fast_time_params)
     solution_reduced = model_reduced.get_solution_ntimeWithForce(time_reduced)
     solution_fast = model_fast_time.get_ntime_exact_solution(time_fast)
     Title = "Solution of Fast time"
-    label_set = ["Exact solution", "Reduced model solution"]
-    solution_set = [solution_reduced[0, :], solution_fast[0, :]]
+    label_set = ["Exact solution"]
+    solution_set = [solution_reduced[0, :]]
 
     plot_solution(time_reduced, solution_set, Title, label_set)
 
@@ -133,17 +133,17 @@ def test_fast_time_first_order_model():
 
 
 def test_fast_time_solution_models():
-
+    EPCILON=0.001
     prob_reduced_model_params, time_reduced = (
         get_harmonic_oscillator_reduced_model_params()
     )
-    prob_fast_time_params, time_fast = get_harmonic_oscillator_fast_time_params(
-        Fast_time=True
+    prob_fast_time_params, time_fast = get_harmonic_oscillator_zeros_order_params(
+        eps=EPCILON
     )
-    prob_fast_time_first_params, time_fast = get_harmonic_oscillator_fast_time_params(
-        Fast_time=True
-    )
-    prob_fast_time_first_params["u0"] = [0, 0]
+    prob_fast_time_first_params, time_fast = get_harmonic_oscillator_first_order_params(
+        eps=EPCILON
+        )
+    # prob_fast_time_first_params["u0"] = [0, 0]
 
     model_reduced = HarmonicOscillator(prob_reduced_model_params)
     model_fast_time = HarmonicOscillator_fast_time(prob_fast_time_params)
@@ -154,11 +154,11 @@ def test_fast_time_solution_models():
     solution_fast = model_fast_time.get_ntime_exact_solution(time_fast)
     solution_first = model_first_order.get_ntime_exact_solution(time_fast)
     position = model_first_order.asyp_expansion(
-        solution_fast[0, :], solution_first[0, :], eps=0.1
+        solution_fast[0, :], solution_first[0, :], eps=EPCILON
     )
     Title = "Solution of Fast time"
-    label_set = ["Exact solution", "zeros order", "asyp expansion"]
-    solution_set = [solution_reduced[0, :], solution_fast[0, :], position]
+    label_set = [ "Exact solution","$0$-th order reduced model", "$1$-st order reduced model"]
+    solution_set = [ solution_reduced[0, :], solution_fast[0, :], position]
 
     plot_solution(time_reduced, solution_set, Title, label_set)
 
@@ -201,10 +201,10 @@ def test_fast_time_first_order_sdc():
 
 
 if __name__ == "__main__":
-    test_compare_solution_fast_time_reduced()
+    # test_compare_solution_fast_time_reduced()
     # test_compare_solution_slow_time_reduced()
     # test_fast_time_SDC()
     # test_residual_fast_time()
     # test_fast_time_first_order_model()
-    # test_fast_time_solution_models()
+    test_fast_time_solution_models()
     # test_fast_time_first_order_sdc()

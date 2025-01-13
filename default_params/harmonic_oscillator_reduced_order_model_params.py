@@ -11,6 +11,6 @@ def get_harmonic_oscillator_reduced_model_params():
     problem_params["t0"] = 0.0
     problem_params["u0"] = [2, 0]
     problem_params["dt"] = 0.1
-    time = np.linspace(0, 1, 1000)
+    time = np.linspace(0, 2*np.pi, 1000)
 
     return problem_params, time

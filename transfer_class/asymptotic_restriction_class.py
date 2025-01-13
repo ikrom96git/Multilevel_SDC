@@ -7,7 +7,7 @@ class AsymptoticRestriction(transfer_class):
     def __init__(self, restrict_nodes):
         self.restriction_node = restrict_nodes
 
-    def restriction_operator1(
+    def restriction_operator0(
         self,
         X,
         V,
@@ -32,8 +32,7 @@ class AsymptoticRestriction(transfer_class):
                 - dt_coarse * fine_model.coll.Q @ (fine_model.prob.omega**2 * X)
                 + dt_coarse * fine_model.coll.Q @ (eps * (V**2) * X)
             )
-            X_first = (X - X_zeros) / eps
-            V_first = (V - V_zeros) / eps
+            
         # breakpoint()
         return X_zeros, V_zeros
 

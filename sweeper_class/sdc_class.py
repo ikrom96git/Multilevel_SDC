@@ -148,8 +148,8 @@ class sdc_class(object):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
-        velocity = V0 + self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
-        position = X0 + self.prob.dt * self.coll.Q @ V
+        velocity = self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
+        position = self.prob.dt * self.coll.Q @ V
         # breakpoint()
         # position = (
         #     X0

@@ -25,6 +25,7 @@ class SortParams(object):
         self.Rcoll = self.get_transfer_matrix_Q(
             self.sdc_coarse_model.coll.nodes, self.sdc_fine_model.coll.nodes
         )
+        
         self.transfer_operator = restriction_class(self.restriction_node)
 
     def get_sorted_params(
