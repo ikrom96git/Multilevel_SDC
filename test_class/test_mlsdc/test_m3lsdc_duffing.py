@@ -54,12 +54,12 @@ def duffing_m3lsdc_standart():
     problem_class_reduced = [
         DuffingEquation,
         DuffingEquation_zeros_order_problem,
-        DuffingEquation_first_order_problem,
+        # DuffingEquation_first_order_problem,
     ]
     problem_params_reduced = [
         problem_duffing_params,
         problem_duffing_zeros_params,
-        problem_duffing_first_params,
+        # problem_duffing_first_params,
     ]
     model_standart_mlsdc = Mlsdc_class(
         problem_params_reduced,
@@ -111,20 +111,22 @@ def duffing_m3lsdc_Asyptotic(order=1):
     return residual_m3lsdc, m3lsdc_pos
 def test_residual():
     residual_mlsdc, *_=duffing_mlsdc()
-    # residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
+    residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
     residual_m3lsdc_asyp, *_=duffing_m3lsdc_Asyptotic()
+    # breakpoint()
     residual_m3lsdc_asyp_zero, *_=duffing_m3lsdc_Asyptotic(order=0)
+    # breakpoint()
     Kiter = np.arange(1, sweeper_params["Kiter"] + 1, 1)
     Title = rf"$\varepsilon={EPSILON}$, fine-level residual"
     label_set = [
         "MLSDC ",
-        # "M3LSDC standart",
-        "M3LSDC asyptotic $\mathcal{O}^{0}$",
-        "M3LSDC asyptotic $\mathcal{O}^{1}$"
+        "M3LSDC standart",
+        "M3LSDC asyptotic $\mathcal{O}(x^{0})$",
+        "M3LSDC asyptotic $\mathcal{O}(x^{1})$"
     ]
     residual_set = [
         np.array(residual_mlsdc)[:, 0],
-        # np.array(residual_m3lsdc_standart)[:, 0],
+        np.array(residual_m3lsdc_standart)[:, 0],
         np.array(residual_m3lsdc_asyp_zero)[:,0],
         np.array(residual_m3lsdc_asyp)[:, 0]
        
@@ -134,12 +136,15 @@ def test_residual():
 def test_solution():
     *_, mlsdc_pos, nodes =duffing_mlsdc()
     *_, m3lsdc_pos=duffing_m3lsdc_standart()
-    Title="Solution"
-    label_set=['mlsdc', 'm3lsdc_standart']
-    solution_set=[mlsdc_pos, m3lsdc_pos]
-    nodes=np.append(0, nodes)
+    problem_params=get_duffing_equation_params(EPSILON)
+    prob=DuffingEquation(problem_params)
+    nodes=4*np.append(0, nodes)
+    solution=prob.get_ntime_exact_solution(nodes)
+    Title=f"$\epsilon={EPSILON}$ Solution"
+    label_set=['Asyptotic solution','mlsdc', 'm3lsdc_standart']
+    solution_set=[solution, mlsdc_pos, m3lsdc_pos]
     plot_solution(nodes, solution_set, Title, label_set) 
 
 if __name__=='__main__':
     test_residual()
-    test_solution()
+    # test_solution()

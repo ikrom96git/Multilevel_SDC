@@ -209,7 +209,7 @@ def test_duffing_equation_solution():
     duffing_solution = [sol[0, :], duffing_zeros_order_solution[0, :], duffing_pos]
     # Time = np.append(0.0, model_mlsdc.sdc_fine_model.coll.nodes)
     Title = rf"$\varepsilon={EPSILON}$"
-    label_set = ["RK45", "$0$-th reduced model", "$1$-st reduced model"]
+    label_set = ["RK45", r"$x^{(0)}$", r"$x^{(0)}+\varepsilon x^{(1)}$"]
 
 
     # solution_set = [mlsdc_pos, mlsdc_reduced_pos]
@@ -249,6 +249,6 @@ def test_sdc_vs_mlsdc():
 
 
 if __name__ == "__main__":
-    test_duffing_residual()
-    # test_duffing_equation_solution()
+    # test_duffing_residual()
+    test_duffing_equation_solution()
     # test_sdc_vs_mlsdc()

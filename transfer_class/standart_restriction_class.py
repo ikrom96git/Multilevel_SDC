@@ -15,8 +15,11 @@ class StandartRestriction(transfer_class):
         coarse_first_model=None,
         eps=None,
     ):
-        X_zero = np.append(X_fine[0], self.restrict(X_fine[1:]))
-        V_zero = np.append(V_fine[0], self.restrict(V_fine[1:]))
+        # X_zero = np.append(X_fine[0], self.restrict(X_fine[1:]))
+        # V_zero = np.append(V_fine[0], self.restrict(V_fine[1:]))
+        X_zero=X_fine
+        V_zero=V_fine
+        print("Just copying")
         # breakpoint()
         if eps is None:
             return X_zero, V_zero

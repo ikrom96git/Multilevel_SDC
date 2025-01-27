@@ -157,7 +157,7 @@ def test_fast_time_solution_models():
         solution_fast[0, :], solution_first[0, :], eps=EPCILON
     )
     Title = "Solution of Fast time"
-    label_set = [ "Exact solution","$0$-th order reduced model", "$1$-st order reduced model"]
+    label_set = [ "Exact solution",r"$x^{(0)}$", r"$x^{(0)}+\sqrt{\varepsilon}x^{(1)}$"]
     solution_set = [ solution_reduced[0, :], solution_fast[0, :], position]
 
     plot_solution(time_reduced, solution_set, Title, label_set)

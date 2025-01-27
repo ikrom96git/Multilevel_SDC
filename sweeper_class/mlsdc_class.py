@@ -26,6 +26,7 @@ class Mlsdc_class(SortParams):
 
     def m3lsdc_sweep(self, X_old, V_old):
         # breakpoint()
+        print('M3LSDC is used')
         X_zero, V_zero, X_first, V_first = self.transfer_operator.restriction_operator(
             X_old,
             V_old,
@@ -67,7 +68,7 @@ class Mlsdc_class(SortParams):
         X_inter = X_old + self.interpolation_node(X_expan)
         V_inter = V_old + self.interpolation_node(V_expan)
         X_fine, V_fine = self.sdc_fine_model.sdc_sweep(X_inter, V_inter)
-        print("position (Asyp): ", X_old - X_fine)
+        # print("position (Asyp): ", X_old - X_fine)
         # breakpoint()
         return X_fine, V_fine
 
@@ -78,6 +79,7 @@ class Mlsdc_class(SortParams):
             return self.mlsdc_sweep(X_old, V_old)
 
     def mlsdc_sweep(self, X_old, V_old):
+        print('MLSDC sweeper is used')
         X_coarse_old, V_coarse_old = self.transfer_operator.restriction_operator(
             X_old,
             V_old,
@@ -86,6 +88,7 @@ class Mlsdc_class(SortParams):
             coarse_first_model=None,
             eps=None,
         )
+        # breakpoint()
         tau_pos, tau_vel = self.transfer_operator.fas_correction_operator(
             X_old,
             V_old,
@@ -100,7 +103,7 @@ class Mlsdc_class(SortParams):
         X_inter = X_old + self.interpolation_node(X_coarse - X_coarse_old)
         V_inter = V_old + self.interpolation_node(V_coarse - V_coarse_old)
         X_fine, V_fine = self.sdc_fine_model.sdc_sweep(X_inter, V_inter)
-        print("position (MLSDC): ", X_old - X_fine)
+        # print("position (MLSDC): ", X_old - X_fine)
         # breakpoint()
         return X_fine, V_fine
 

@@ -7,6 +7,15 @@ class AsymptoticRestriction(transfer_class):
     def __init__(self, restrict_nodes):
         self.restriction_node = restrict_nodes
 
+    def restriction_operator_nodes(
+        self,
+        X_fine,
+        V_fine,
+    ):
+        X_coarse = np.append(X_fine[0], self.restriction_node(X_fine[1:]))
+        V_coarse = np.append(V_fine[0], self.restriction_node(V_fine[1:]))
+
+        return X_coarse, V_coarse
     def restriction_operator0(
         self,
         X,
@@ -45,15 +54,17 @@ class AsymptoticRestriction(transfer_class):
         coarse_first_model=None,
         eps=None,
     ):
-
         X_zero, V_zero = fine_model.compute_integral(X_fine, V_fine)
+        X_zero_nodes, V_zero_nodes=self.restriction_operator_nodes(X_zero, V_zero)
         # breakpoint()
         if eps is None:
-            return X_zero, V_zero
+            return X_zero_nodes, V_zero_nodes
         else:
             X_first = (X_fine - X_zero) / eps
             V_first = (V_fine - V_zero) / eps
-            return X_zero, V_zero, X_first, V_first
+            X_first_nodes, V_first_nodes=self.restriction_operator_nodes(X_first, V_first)
+            
+            return X_zero_nodes, V_zero_nodes, X_first_nodes, V_first_nodes
 
     def fas_correction_zeros(
         self, X, V, fine_prob=None, coarse_zeros_model=None, eps=None

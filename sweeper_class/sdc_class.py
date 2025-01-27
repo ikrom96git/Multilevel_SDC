@@ -25,8 +25,8 @@ class sdc_class(object):
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         X_pos = (
             X
-            - self.prob.dt * self.coll.Q @ V0
-            - self.prob.dt**2 * self.coll.QQ @ self.build_f(X, V, T)
+            - self.prob.dt * (self.coll.Q @ V0)
+            - self.prob.dt**2 * (self.coll.QQ @ self.build_f(X, V, T))
         )
         V_pos = V - self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
         return X_pos, V_pos
@@ -138,7 +138,7 @@ class sdc_class(object):
             # tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
             pos_residual += tau_pos
             vel_residual += tau_vel
-            print("tau correction")
+            # print("tau correction")
             # breakpoint()
         vel_inf_norm = np.linalg.norm(vel_residual, np.inf)
         pos_inf_norm = np.linalg.norm(pos_residual, np.inf)
@@ -150,6 +150,9 @@ class sdc_class(object):
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
         velocity = self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
         position = self.prob.dt * self.coll.Q @ V
+        # velocity=self.prob.dt*(self.coll.Q@V)
+        # position=self.prob.dt*(self.coll.Q@X)
+        
         # breakpoint()
         # position = (
         #     X0
@@ -174,7 +177,7 @@ class sdc_class(object):
             # tau_vel_nn = np.append(0, tau_vel[1:] - tau_vel[:-1])
             pos_residual += tau_pos
             vel_residual += tau_vel
-            print("tau correction")
+            # print("tau correction")
         return pos_residual, vel_residual
 
     def max_norm_residual(self, residual):
@@ -196,7 +199,7 @@ class sdc_class(object):
 
         for ii in range(self.coll.num_nodes + 1):
             Y = np.array([U[ii], U[self.coll.num_nodes + 1 + ii]])
-            print(Y)
+            # print(Y)
             pos_equation = np.zeros([1])
             vel_equation = np.zeros([1])
             for jj in range(self.coll.num_nodes + 1):
@@ -250,6 +253,16 @@ class sdc_class(object):
             )
         return X0, V0
 
+    def compute_end_point(self, pos, vel, tau_pos, tau_vel):
+        V_0=np.ones(len(self.coll.weights))*self.prob.u0[1]
+        T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
+        f=self.build_f(pos, vel, T)
+        x_n=self.prob.u0[0]+self.prob.dt*self.coll.weights@V_0+self.prob.dt**2*(self.coll.q@self.coll.Q[1:,1:])@f[1:]
+        v_n=self.prob.u0[1]+self.prob.dt*self.coll.weights@f[1:]
+        if tau_pos is not None:
+            x_n+=tau_pos[-1]
+            v_n+=tau_vel[-1]
+        return x_n, v_n
 
 if __name__ == "__main__":
     pass

@@ -85,3 +85,9 @@ class SortParams(object):
 
     def interpolation_node(self, U):
         return np.append(U[0], self.Pcoll @ U[1:])
+    
+    def restrict_nodes(self, X_fine, V_fine):
+        X_coarse = np.append(X_fine[0], self.restriction_node(X_fine[1:]))
+        V_coarse = np.append(V_fine[0], self.restriction_node(V_fine[1:]))
+
+        return X_coarse, V_coarse
