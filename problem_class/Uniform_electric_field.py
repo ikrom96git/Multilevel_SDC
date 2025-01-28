@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from core.Pars import Pars
+from core.Pars import _Pars
 class Uniform_electric_field:
     def __init__(self, problem_params):
-        self.params=Pars(problem_params)
+        self.params=_Pars(problem_params)
 
     def P_matrix(self):
         P=np.zeros((3, 3))
