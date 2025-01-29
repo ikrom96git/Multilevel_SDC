@@ -1,93 +1,43 @@
 import numpy as np
+from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-from scipy.linalg import solve
 
-# Define parameters
-c = 2.0  # Given constant
-epsilon = 0.001  # Given epsilon
-s = 0  # Assuming s = 0 for simplicity
+# Parameters
+eps = 0.01
+c = 2
 
-# Compute ae and be
-ae = (1 + np.sqrt(1 - 2 * c * epsilon**2)) / (2 * epsilon)
-be = (1 - np.sqrt(1 - 2 * c * epsilon**2)) / (2 * epsilon)
-
-# Initial conditions
-x0 = np.array([1, 1, 1])  # Initial position
-v0 = np.array([1, 1, 1])  # Initial velocity
-
-# Time range
-t_values = np.linspace(0, 5, 10000)  # Time from 0 to 10
-
-# Define system of equations from initial conditions
-t0 = 0  # Initial time
-
-# Position equations at t = 0
-eq1 = [0,0,0,0, np.cos(np.sqrt(c) * (t0 - s)), np.sin(np.sqrt(c) * (t0 - s))]  # x1(0)
-eq2 = [np.sin(ae * (t0 - s)), -np.cos(ae * (t0 - s)), np.sin(be * (t0 - s)), -np.cos(be * (t0 - s)), 0, 0]  # x2(0)
-eq3 = [np.cos(ae * (t0 - s)), np.sin(ae * (t0 - s)), np.cos(be * (t0 - s)), np.sin(be * (t0 - s)), 0, 0]  # x3(0)
-
-# Velocity equations at t = 0
-eq4 = [0, 0, 0, 0, -np.sqrt(c) * np.sin(np.sqrt(c) * (t0 - s)), np.sqrt(c) * np.cos(np.sqrt(c) * (t0 - s))]  # v1(0)
-eq5 = [ae * np.cos(ae * (t0 - s)), ae * np.sin(ae * (t0 - s)), be * np.cos(be * (t0 - s)), be * np.sin(be * (t0 - s)), 0, 0]  # v2(0)
-eq6 = [-ae * np.sin(ae * (t0 - s)), ae * np.cos(ae * (t0 - s)), -be * np.sin(be * (t0 - s)), be * np.cos(be * (t0 - s)), 0, 0]  # v3(0)
-
-# Construct coefficient matrix
-A = np.array([eq1, eq2, eq3, eq4, eq5, eq6])
-
-# Right-hand side (initial conditions)
-B = np.array([1, 1, 1, 1, 1, 1])
-
-# Solve the system for unknowns a1, a2, b1, b2, c1, c2
-solution = solve(A, B)
-
-# Extract solutions
-a1, a2, b1, b2, c1, c2 = solution
-
-print(f"Computed coefficients:\n"
-      f"a1 = {a1:.4f}, a2 = {a2:.4f}, b1 = {b1:.4f}, b2 = {b2:.4f}, c1 = {c1:.4f}, c2 = {c2:.4f}")
-
-# Define the exact solution for position x_e(t)
-def x_e(t):
-    factor = c1 * np.cos(np.sqrt(c) * (t - s)) + c2 * np.sin(np.sqrt(c) * (t - s))
+# Right-hand side of the ODE system
+def ode_system(t, y):
+    x, v = y[:3], y[3:]
     
-    x1 = a1 * np.sin(ae * (t - s)) - a2 * np.cos(ae * (t - s)) + b1 * np.sin(be * (t - s)) - b2 * np.cos(be * (t - s))
-    x2 = a1 * np.cos(ae * (t - s)) + a2 * np.sin(ae * (t - s)) + b1 * np.cos(be * (t - s)) + b2 * np.sin(be * (t - s))
+    v_perp = np.array([0, v[2], -v[1]])
+    E_x = c * np.array([-x[0], x[1] / 2, x[2] / 2])
     
-    return np.array([factor, x1, x2])
-
-# Compute velocity as the derivative of x_e(t)
-def v_e(t):
-    factor_derivative = -c1 * np.sqrt(c) * np.sin(np.sqrt(c) * (t - s)) + c2 * np.sqrt(c) * np.cos(np.sqrt(c) * (t - s))
+    dxdt = v
+    dvdt = (1 / eps) * v_perp + E_x
     
-    x1_derivative = a1 * ae * np.cos(ae * (t - s)) + a2 * ae * np.sin(ae * (t - s)) + b1 * be * np.cos(be * (t - s)) + b2 * be * np.sin(be * (t - s))
-    x2_derivative = -a1 * ae * np.sin(ae * (t - s)) + a2 * ae * np.cos(ae * (t - s)) - b1 * be * np.sin(be * (t - s)) + b2 * be * np.cos(be * (t - s))
-    
-    return np.array([factor_derivative, x1_derivative, x2_derivative])
+    return np.concatenate([dxdt, dvdt])
 
-# Compute values for plotting
-x_values = np.array([x_e(t) for t in t_values])
-v_values = np.array([v_e(t) for t in t_values])
+# Initial conditions: [x1, x2, x3, v1, v2, v3]
+y0 = [1, 1, 1, 1, 1, 1]
 
-# Plot position
-plt.figure(figsize=(10, 5))
-plt.plot(t_values, x_values[:, 0], label='x1')
-plt.plot(t_values, x_values[:, 1], label='x2')
-plt.plot(t_values, x_values[:, 2], label='x3')
-plt.xlabel('Time')
-plt.ylabel('Position')
-plt.legend()
-plt.title('Exact Solution for Position')
-plt.grid()
-plt.show()
+# Time span
+t_span = (0, 15)  # From t=0 to t=1
+t_eval = np.linspace(*t_span, 10000)
 
-# Plot velocity
-plt.figure(figsize=(10, 5))
-plt.plot(t_values, v_values[:, 0], label='v1')
-plt.plot(t_values, v_values[:, 1], label='v2')
-plt.plot(t_values, v_values[:, 2], label='v3')
-plt.xlabel('Time')
-plt.ylabel('Velocity')
-plt.legend()
-plt.title('Velocity Computed as Derivative')
-plt.grid()
+# Solve the system
+sol = solve_ivp(ode_system, t_span, y0, t_eval=t_eval, method='RK45')
+
+# Plot results
+fig, axes = plt.subplots(2, 1, figsize=(10, 6))
+labels = ["x1", "x2", "x3"]
+for i in range(3):
+    axes[0].plot(sol.t, sol.y[i], label=labels[i])
+    axes[1].plot(sol.t, sol.y[i+3], label=f"v{i+1}")
+
+axes[0].set_title("Position Components")
+axes[1].set_title("Velocity Components")
+axes[0].legend()
+axes[1].legend()
+plt.tight_layout()
 plt.show()

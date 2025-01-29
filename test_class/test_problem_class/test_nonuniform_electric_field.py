@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from problem_class.Nonuniform_electric_field import Nonuniform_electric_field
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 
 
 def prob_params():
@@ -55,14 +55,35 @@ def plot_Error(Data_error, time):
     plt.semilogy(time, Data_error)
     plt.show()
 
-def right_hand_side(y, t, eps):
+def right_hand_side(t, y, eps):
     c=2.0
-    dydt=[y[3], y[4], y[5], -c*y[0], 1/eps*y[5]+0.5*y[1], -(1/eps)*y[4]+0.5*y[2]]
+    dydt=[y[3], y[4], y[5], -c*y[0], 1/eps*y[5]+c*0.5*y[1], -(1/eps)*y[4]+c*0.5*y[2]]
     return dydt
+
+# def right_hand_side(t, y, eps):
+#     c = 2.0
+#     dydt = [
+#         y[3],  # dx1/dt = v1
+#         y[4],  # dx2/dt = v2
+#         y[5],  # dx3/dt = v3
+#         -c * y[0],  # dv1/dt = -c * x1
+#         (1 / eps) * y[5] + c * 0.5 * y[1],  # dv2/dt = (1/eps) * v3 + c * 0.5 * x2
+#         -(1 / eps) * y[4] + c * 0.5 * y[2]  # dv3/dt = -(1/eps) * v2 + c * 0.5 * x3
+#     ]
+#     return dydt
+
 
 def get_odeint(time, eps):
     u0=np.ones(6)
-    sol=odeint(right_hand_side, u0, time, args=(eps,))
+    t_span=(0, 15)
+    sol=solve_ivp(right_hand_side, t_span, u0, t_eval=time, args=(eps,))
+    
+    plt.plot(time, sol.y[0], label='x1')
+    plt.plot(time, sol.y[1], label='x2')
+    plt.plot(time, sol.y[2], label='x3')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
     return sol
 
 
@@ -70,8 +91,8 @@ if __name__=="__main__":
     time=np.linspace(0, 15,100000)
     Error_data=get_Error(time)
     # plot_Error(Error_data, time)
-    plot_solution(time)
-    # get_odeint(time, eps=0.001)
+    # plot_solution(time)
+    get_odeint(time, eps=0.01)
 
 
 
