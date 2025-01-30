@@ -3,6 +3,7 @@ from problem_class.Magnetic_field import Magnetic_field
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from copy import deepcopy
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
 EPSILON=0.01
 t_end=50
 dt=(2*np.pi*EPSILON)/80
@@ -153,10 +154,46 @@ def solution_asyp():
     return G, sol
 
 def plot_solution(sol):
-    
+    # plt.rcParams['axes3d.yaxis.panecolor']=''
     ax=plt.figure().add_subplot(projection='3d')
+    # plt.rcParams['axes.xmargin']=False
+    x_grid = np.linspace(-1.5, 1.5, 5)  # Adjust number of grid lines
+    z_grid = np.linspace(0.98, 1.02, 5)  # Adjust grid height range
+    xg, zg = np.meshgrid(x_grid, z_grid)
+    ax.grid(False)
+    grid_lines = []
+    for i in range(len(x_grid)):  
+        grid_lines.append([(xg[i, 0], -1.5, zg[i, 0]), (xg[i, -1], 1.5, zg[i, -1])])  # Adjust Y-range
+
+    ax.add_collection3d(Line3DCollection(grid_lines, colors='gray', linewidths=0.5, linestyles='dashed'))
+
+    
+    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    # ax.yaxis.pane.set_visible(False)  
+    # make the grid lines transparent
+    # ax.xaxis._axinfo["grid"]['color'] =  (1,1,1,0)
+    # ax.yaxis._axinfo["grid"]['color'] =  (1,1,1,0)
+    ax.zaxis._axinfo["grid"]['color'] =  (1,1,1,0)
     ax.plot(sol.y[0], sol.y[1], sol.y[2], label='curve')
     ax.legend()
+    ax.set_xlabel('$X(t)$')
+    ax.set_ylabel("$Y(t)$")
+    ax.set_zlabel("$Z(t)$")
+    
+    # ax.grid(False)
+    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    
+    # ax.set_axis_off()
+    # ax.grid(False)
+    # ax.grid(visible=None, axis='x')
+    # ax.set_yaxis(False)
+    # ax.yaxis._axinfo["grid"].update({"linewidth": 0})  # Remove YZ grid
+    # ax.zaxis._axinfo["grid"].update({"linewidth": 1})  # Remove XZ grid
+    # ax.xaxis._axinfo['grid'].update({'linewidth':0})
+    # ax.w_yaxis.pane.fill = False  # Hide YZ plane
+    # ax.w_zaxis.pane.fill = False  # Hide XZ plane (optional)
     plt.tight_layout()
     plt.show()
 
@@ -165,11 +202,12 @@ def plot_solution(sol):
     plt.plot(sol.t, sol.y[0], label=r'$x_1$')
     plt.plot(sol.t, sol.y[1], label=r'$x_2$')
     plt.plot(sol.t, sol.y[2], label=r'$x_3$')
+
     plt.xlabel('Time')
     plt.ylabel('Position Components')
     plt.legend()
     plt.grid()
-    plt.show()
+    # plt.show()
 
 def get_error():
     G, Solution=solution_asyp()
@@ -183,12 +221,60 @@ def get_error():
     plt.tight_layout()
     plt.show()
 
+def plot_values():
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
+    # Generate sample data (replace with actual numerical solution)
+    t = np.linspace(0, 5, 1000)
+    eps = 0.01
+
+    X1 = np.cos(2 * np.pi * t)  # Example trajectory 1
+    Y1 = np.sin(2 * np.pi * t)
+    Z1 = 1 + eps * np.sin(20 * np.pi * t)  # Small oscillations in Z
+
+    X2 = np.cos(2 * np.pi * t) + eps * t   # Example trajectory 2
+    Y2 = np.sin(2 * np.pi * t)
+    Z2 = 1 - eps * np.sin(20 * np.pi * t)
+
+    fig = plt.figure(figsize=(12, 4))
+
+    # Left: First 3D trajectory
+    ax1 = fig.add_subplot(131, projection='3d')
+    ax1.plot(X1, Y1, Z1, color='lightblue', alpha=0.7)
+    ax1.set_xlabel("X(t)")
+    ax1.set_ylabel("Y(t)")
+    ax1.set_zlabel("Z(t)")
+
+    # Middle: Second 3D trajectory
+    ax2 = fig.add_subplot(132, projection='3d')
+    ax2.plot(X2, Y2, Z2, color='purple', alpha=0.7)
+    ax2.set_xlabel("X(t)")
+    ax2.set_ylabel("Y(t)")
+    ax2.set_zlabel("Z(t)")
+
+    # Right: 2D projection in XY-plane
+    ax3 = fig.add_subplot(133)
+    ax3.plot(X1, Y1, color='lightblue', label="Initial condition in (37)")
+    ax3.plot(X2, Y2, color='purple', label="Initial condition in (36)")
+    ax3.set_xlabel("X(t)")
+    ax3.set_ylabel("Y(t)")
+    ax3.legend()
+    ax3.set_title(r"$\varepsilon=0.01, \, T=5$")
+
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__=="__main__":
     time=np.linspace(0, 5, 100000)
     # solution=get_solution(time)
     # plot_solution(solution, 1)
     # solution_asyp()
-    # test_RK45()
-    get_error()
+    sol=test_RK45()
+    plot_solution(sol)
+    # get_error()
     # breakpoint()
+    # plot_values()
 

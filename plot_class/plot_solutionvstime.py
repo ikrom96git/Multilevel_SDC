@@ -15,7 +15,7 @@ def plot_solution(time, solution, title, label_set):
             linestyle=linestyle[ii],
         )
     # plt.title(title)
-    plt.xlabel("$t$")
+    plt.xlabel("Time")
     plt.ylabel("$x(t, \\varepsilon)$")
     plt.legend()
     # plt.title(title)
