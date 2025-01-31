@@ -1,16 +1,10 @@
 import numpy as np
 
-from default_params.duffing_equation_default_params import (
-    get_duffing_equation_params,
-    get_duffing_zeros_order_params,
-    get_duffing_first_order_params,
-)
+from default_params.harmonic_oscillator_default_fast_time_params import get_harmonic_oscillator_params, get_harmonic_oscillator_zeros_order_params, get_harmonic_oscillator_first_order_params
 from default_params.mlsdc_defautl_params import get_mlsdc_default_params
-from problem_class.DuffingEquation import (
-    DuffingEquation,
-    DuffingEquation_zeros_order_problem,
-    DuffingEquation_first_order_problem,
-)
+from problem_class.HarmonicOscillator import HarmonicOscillator
+from problem_class.HarmonicOscillator_fast_time_reduced_problem import HarmonicOscillator_fast_time, HarmonicOscillator_fast_time_first_order
+
 from sweeper_class.sdc_class import sdc_class
 from sweeper_class.mlsdc_class import Mlsdc_class
 from plot_class.plot_residual import plot_residual
@@ -33,10 +27,10 @@ problem_params, collocation_params, sweeper_params, *_=get_mlsdc_default_params(
 
 
 def duffing_mlsdc():
-    problem_duffing_params = get_duffing_equation_params(EPSILON)
-    problem_class_mlsdc = [DuffingEquation, DuffingEquation]
+    problem_harmonic_oscillator_params = get_harmonic_oscillator_params(EPSILON)
+    problem_class_mlsdc = [HarmonicOscillator, HarmonicOscillator]
     model_mlsdc = Mlsdc_class(
-        problem_duffing_params,
+        problem_harmonic_oscillator_params,
         collocation_params,
         sweeper_params,
         problem_class_mlsdc,
@@ -50,17 +44,17 @@ def duffing_mlsdc():
     return residual_mlsdc, mlsdc_pos, nodes
 
 def duffing_m3lsdc_standart():
-    problem_duffing_params=get_duffing_equation_params(EPSILON)
-    problem_duffing_zeros_params=get_duffing_zeros_order_params(EPSILON)
-    problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
+    problem_HarmonicOscillator_params=get_harmonic_oscillator_params(EPSILON)
+    problem_HarmonicOscillator_zeros_params=get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_HarmonicOscillator_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
     problem_class_reduced = [
-        DuffingEquation,
-        DuffingEquation_zeros_order_problem,
+        HarmonicOscillator,
+        HarmonicOscillator_fast_time,
         # DuffingEquation_first_order_problem,
     ]
     problem_params_reduced = [
-        problem_duffing_params,
-        problem_duffing_zeros_params,
+        problem_HarmonicOscillator_params,
+        problem_HarmonicOscillator_zeros_params,
         # problem_duffing_first_params,
     ]
     model_standart_mlsdc = Mlsdc_class(
@@ -76,39 +70,39 @@ def duffing_m3lsdc_standart():
     return residual_m3lsdc, m3lsdc_pos
 
 def duffing_sdc():
-    problem_param=get_duffing_equation_params(eps=EPSILON)
+    problem_param=get_harmonic_oscillator_params(eps=EPSILON)
     collocation_sdc=deepcopy(collocation_params)
     collocation_sdc['num_nodes']=5
-    model=sdc_class(problem_param, collocation_sdc, sweeper_params, DuffingEquation)
+    model=sdc_class(problem_param, collocation_sdc, sweeper_params, HarmonicOscillator)
     model.sdc_iter()
     # breakpoint()
     return model.get_residual
 
 
 def duffing_m3lsdc_Asyptotic(order=1):
-    problem_duffing_params=get_duffing_equation_params(EPSILON)
-    problem_duffing_zeros_params=get_duffing_zeros_order_params(EPSILON)
-    problem_duffing_first_params = get_duffing_first_order_params(EPSILON)
+    problem_HarmonicOscillator_params=get_harmonic_oscillator_params(EPSILON)
+    problem_HarmonicOscillator_zeros_params=get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_HarmonicOscillator_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
     if order==1:
         problem_class_reduced = [
-            DuffingEquation,
-            DuffingEquation_zeros_order_problem,
-            DuffingEquation_first_order_problem,
+            HarmonicOscillator,
+            HarmonicOscillator_fast_time,
+            HarmonicOscillator_fast_time_first_order,
         ]
         problem_params_reduced = [
-            problem_duffing_params,
-            problem_duffing_zeros_params,
-            problem_duffing_first_params,
+            problem_HarmonicOscillator_params,
+            problem_HarmonicOscillator_zeros_params,
+            problem_HarmonicOscillator_first_params,
         ]
     else:
         problem_class_reduced = [
-            DuffingEquation,
-            DuffingEquation_zeros_order_problem,
+            HarmonicOscillator,
+            HarmonicOscillator_fast_time,
             # DuffingEquation_first_order_problem,
         ]
         problem_params_reduced = [
-            problem_duffing_params,
-            problem_duffing_zeros_params,
+            problem_HarmonicOscillator_params,
+            problem_HarmonicOscillator_zeros_params,
             # problem_duffing_first_params,
         ]
     model_standart_mlsdc = Mlsdc_class(
@@ -124,7 +118,7 @@ def duffing_m3lsdc_Asyptotic(order=1):
     return residual_m3lsdc, m3lsdc_pos
 def test_residual():
     residual_mlsdc, *_=duffing_mlsdc()
-    # residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
+    residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
     residual_m3lsdc_asyp, *_=duffing_m3lsdc_Asyptotic()
     # breakpoint()
     residual_m3lsdc_asyp_zero, *_=duffing_m3lsdc_Asyptotic(order=0)
@@ -136,14 +130,15 @@ def test_residual():
     label_set = [
         'SDC',
         "MLSDC ",
-        # "M3LSDC standart",
+        "M3LSDC standart",
         r"M3LSDC averaging $\mathcal{O}(\varepsilon^{0})$",
         r"M3LSDC averaging $\mathcal{O}(\varepsilon^{1})$"
     ]
+    breakpoint()
     residual_set = [
         np.array(residual_sdc)[:,0],
         np.array(residual_mlsdc)[:, 0],
-        # np.array(residual_m3lsdc_standart)[:, 0],
+        np.array(residual_m3lsdc_standart)[:, 0],
         np.array(residual_m3lsdc_asyp_zero)[:,0],
         np.array(residual_m3lsdc_asyp)[:, 0]
        

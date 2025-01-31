@@ -1,6 +1,6 @@
 import matplotlib.pyplot as _plt
 # _plt.rcParams["text.usetex"] =True
-_plt.rcParams['figure.figsize'] = 12.44, 6.74
+_plt.rcParams['figure.figsize'] = 8.44, 6.74
 _plt.rc('font', size=16)
 _plt.rcParams['lines.linewidth'] = 2
 _plt.rcParams['axes.titlesize'] = 20
