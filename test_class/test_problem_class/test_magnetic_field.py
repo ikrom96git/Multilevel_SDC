@@ -5,8 +5,76 @@ from scipy.integrate import solve_ivp
 from copy import deepcopy
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 EPSILON=0.01
-t_end=50
+t_end=5
 dt=(2*np.pi*EPSILON)/80
+def ode_solver():
+    import numpy as np
+    from scipy.integrate import solve_ivp
+    import matplotlib.pyplot as plt
+
+    # Define the function M(x)
+    def M(x):
+        x1, x2, x3 = x  # Unpacking x
+        norm = np.sqrt(x1**2 + x2**2)
+        if norm == 0:
+            return np.array([0, 0, 0])  # Handle division by zero
+        return (1 / norm) * np.array([-x2, x1, 0])
+
+    # Define the ODE system
+    def ode_system(t, y, eps):
+        x = y[:3]  # Position vector
+        v = y[3:]  # Velocity vector
+
+        dxdt = v
+        dvdt = (1 / eps) * np.cross(v, M(x)) + np.cross(v, [0, 0, 1])
+
+        return np.concatenate((dxdt, dvdt))
+
+    # Set initial conditions
+    x0 = np.array([0, 1, 1])
+    v0 = np.array([1, 1e-2, 0])  # Assuming eps = 0.01 for this example
+    y0 = np.concatenate((x0, v0))
+
+    # Time span
+    t_span = (0, 5)
+    t_eval = np.linspace(*t_span, 100000)
+
+    # Solve the ODE system
+    eps = 0.01  # Define epsilon
+    sol = solve_ivp(ode_system, t_span, y0, args=(eps,), t_eval=t_eval, method='RK45')
+    ax=plt.figure().add_subplot(projection='3d')
+    ax.set_xlabel('X(t)')
+    ax.set_ylabel('Y(t)')
+    ax.set_zlabel('Z(t)')
+    ax.grid(False)
+    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-1.5, 1.5)
+    # ax.set_zlim(0.8, 1.1)
+    x = ax.get_xticks()
+    y = ax.get_yticks()
+    x, y = np.meshgrid(x, y)
+    z = np.zeros_like(x)
+    # ax.plot_wireframe(x, y,z, color='black', alpha=0.15)
+    ax.plot(sol.y[0, :], sol.y[1,:], sol.y[2,:], label='curve')
+    
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
+    # Plot the solution
+    plt.figure(figsize=(10, 5))
+    plt.plot(sol.t, sol.y[0], label=r'$x_1$')
+    plt.plot(sol.t, sol.y[1], label=r'$x_2$')
+    plt.plot(sol.t, sol.y[2], label=r'$x_3$')
+    plt.xlabel('Time')
+    plt.ylabel('Position Components')
+    plt.legend()
+    plt.grid()
+    # plt.show()
+
+
 def Error(G, X):
     abs_norm=np.sum(np.abs(G-X))
     # breakpoint()
@@ -50,24 +118,21 @@ def test_RK45():
     # Define the function M(x)
     
     # Set initial conditions
-    x0 = np.array([1, 1, 1])
+    x0 = np.array([0, 1, 1])
     v0 = np.array([1, EPSILON, 0])  # Assuming eps = 0.01 for this example
     y0 = np.concatenate((x0, v0))
 
     # Time span
     t_span = (0, t_end)
-    t_eval = np.linspace(*t_span, 1000)
-    t_eval=np.arange(*t_span,dt)
+    t_eval = np.linspace(*t_span, 10000)
+    # t_eval=np.arange(*t_span,dt)
     # Solve the ODE system
     eps = EPSILON  # Define epsilon
     sol = solve_ivp(ode_system, t_span, y0, args=(eps,), t_eval=t_eval, method='RK45')
     return sol
     # ax=plt.figure().add_subplot(projection='3d')
     
-    # ax.plot(sol.y[0, :], sol.y[1,:], sol.y[2,:], label='curve')
-    # ax.legend()
-    # plt.tight_layout()
-    # plt.show()
+    
     # # breakpoint()
     # # Plot the solution
     # plt.figure(figsize=(10, 5))
@@ -157,43 +222,37 @@ def plot_solution(sol):
     # plt.rcParams['axes3d.yaxis.panecolor']=''
     ax=plt.figure().add_subplot(projection='3d')
     # plt.rcParams['axes.xmargin']=False
-    x_grid = np.linspace(-1.5, 1.5, 5)  # Adjust number of grid lines
-    z_grid = np.linspace(0.98, 1.02, 5)  # Adjust grid height range
-    xg, zg = np.meshgrid(x_grid, z_grid)
+   
     ax.grid(False)
     grid_lines = []
-    for i in range(len(x_grid)):  
-        grid_lines.append([(xg[i, 0], -1.5, zg[i, 0]), (xg[i, -1], 1.5, zg[i, -1])])  # Adjust Y-range
-
-    ax.add_collection3d(Line3DCollection(grid_lines, colors='gray', linewidths=0.5, linestyles='dashed'))
-
+   
     
     ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
     ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
     ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-    # ax.yaxis.pane.set_visible(False)  
-    # make the grid lines transparent
-    # ax.xaxis._axinfo["grid"]['color'] =  (1,1,1,0)
-    # ax.yaxis._axinfo["grid"]['color'] =  (1,1,1,0)
-    ax.zaxis._axinfo["grid"]['color'] =  (1,1,1,0)
+    
+
     ax.plot(sol.y[0], sol.y[1], sol.y[2], label='curve')
+    # make a mesh grid
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-1.5, 1.5)    
+    
+    x = ax.get_xticks()
+    y = ax.get_yticks()
+    x, y = np.meshgrid(x, y)
+    z = np.zeros_like(x)
+    # plot the mesh grid
+    # ax.plot_surface(x, y, z, alpha=0.5)
+    #mesh like net with dashed lines
+    ax.plot_wireframe(x, y, z, color='black', alpha=0.15)
+    # set upper bound for x and y axis
     ax.legend()
     ax.set_xlabel('$X(t)$')
     ax.set_ylabel("$Y(t)$")
     ax.set_zlabel("$Z(t)$")
+
     
-    # ax.grid(False)
-    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-    
-    # ax.set_axis_off()
-    # ax.grid(False)
-    # ax.grid(visible=None, axis='x')
-    # ax.set_yaxis(False)
-    # ax.yaxis._axinfo["grid"].update({"linewidth": 0})  # Remove YZ grid
-    # ax.zaxis._axinfo["grid"].update({"linewidth": 1})  # Remove XZ grid
-    # ax.xaxis._axinfo['grid'].update({'linewidth':0})
-    # ax.w_yaxis.pane.fill = False  # Hide YZ plane
-    # ax.w_zaxis.pane.fill = False  # Hide XZ plane (optional)
+   
     plt.tight_layout()
     plt.show()
 
@@ -272,8 +331,9 @@ if __name__=="__main__":
     # solution=get_solution(time)
     # plot_solution(solution, 1)
     # solution_asyp()
-    sol=test_RK45()
-    plot_solution(sol)
+    # sol=test_RK45()
+    # plot_solution(sol)
+    ode_solver()
     # get_error()
     # breakpoint()
     # plot_values()

@@ -91,7 +91,7 @@ def test_sdc_with_collocation_residual(Force=True):
 
 
 if __name__ == "__main__":
-    # test_sdc_with_force()
+    test_sdc_with_force()
     # test_sdc_residual(Force=False)
     # test_collocation_problem()
-    test_sdc_with_collocation_residual()
+    # test_sdc_with_collocation_residual()

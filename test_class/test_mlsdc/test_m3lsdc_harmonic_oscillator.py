@@ -21,13 +21,13 @@ from scipy.integrate import solve_ivp
 from copy import deepcopy
 
 
-EPSILON=0.01
+EPSILON=0.1
 
 problem_params, collocation_params, sweeper_params, *_=get_mlsdc_default_params()
 
 
 def duffing_mlsdc():
-    problem_harmonic_oscillator_params = get_harmonic_oscillator_params(EPSILON)
+    problem_harmonic_oscillator_params, *_ = get_harmonic_oscillator_params(EPSILON)
     problem_class_mlsdc = [HarmonicOscillator, HarmonicOscillator]
     model_mlsdc = Mlsdc_class(
         problem_harmonic_oscillator_params,
@@ -70,7 +70,7 @@ def duffing_m3lsdc_standart():
     return residual_m3lsdc, m3lsdc_pos
 
 def duffing_sdc():
-    problem_param=get_harmonic_oscillator_params(eps=EPSILON)
+    problem_param, *_=get_harmonic_oscillator_params(eps=EPSILON)
     collocation_sdc=deepcopy(collocation_params)
     collocation_sdc['num_nodes']=5
     model=sdc_class(problem_param, collocation_sdc, sweeper_params, HarmonicOscillator)
@@ -118,10 +118,10 @@ def duffing_m3lsdc_Asyptotic(order=1):
     return residual_m3lsdc, m3lsdc_pos
 def test_residual():
     residual_mlsdc, *_=duffing_mlsdc()
-    residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
-    residual_m3lsdc_asyp, *_=duffing_m3lsdc_Asyptotic()
+    # residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
+    # residual_m3lsdc_asyp, *_=duffing_m3lsdc_Asyptotic()
     # breakpoint()
-    residual_m3lsdc_asyp_zero, *_=duffing_m3lsdc_Asyptotic(order=0)
+    # residual_m3lsdc_asyp_zero, *_=duffing_m3lsdc_Asyptotic(order=0)
     residual_sdc=duffing_sdc()
     # breakpoint()
     nodes=collocation_params['num_nodes']
