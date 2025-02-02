@@ -4,7 +4,7 @@ from transfer_class.transfer_class import transfer_class
 
 class StandartRestriction(transfer_class):
     def __init__(self, restrict_nodes):
-        self.restrict = restrict_nodes
+        self.restriction_node = restrict_nodes
 
     def restriction_operator(
         self,
@@ -17,17 +17,24 @@ class StandartRestriction(transfer_class):
     ):
         # X_zero = np.append(X_fine[0], self.restrict(X_fine[1:]))
         # V_zero = np.append(V_fine[0], self.restrict(V_fine[1:]))
-        X_zero=X_fine
-        V_zero=V_fine
+        X_zero, V_zero=self.restriction_operator_nodes(X_fine, V_fine)
         print("Just copying")
         # breakpoint()
         if eps is None:
             return X_zero, V_zero
         else:
-            X_first = (X_fine - X_zero) / eps
-            V_first = (V_fine - V_zero) / eps
+            X_first = np.zeros(len(X_zero))
+            V_first = np.zeros(len(V_zero))
             # breakpoint()
             return X_zero, V_zero, X_first, V_first
+    def restriction_operator_nodes(
+        self,
+        X_fine,
+        V_fine,
+    ):
+        X_coarse = np.append(X_fine[0], self.restriction_node(X_fine[1:]))
+        V_coarse = np.append(V_fine[0], self.restriction_node(V_fine[1:]))
+        return X_coarse, V_coarse
 
     def fas_correction_zeros(self, X, V, fine_prob=None, coarse_zeros_model=None):
         X_zero, V_zero = self.restriction_operator(X, V)

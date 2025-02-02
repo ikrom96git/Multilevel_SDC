@@ -148,8 +148,8 @@ class sdc_class(object):
         X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
         V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         T = self.prob.dt * np.append(self.prob.t0, self.coll.nodes)
-        velocity = self.prob.dt * self.coll.Q @ self.build_f(X, V, T)
-        position = self.prob.dt * self.coll.Q @ V
+        velocity =self.prob.dt * self.coll.Q @ self.build_f(X, V)
+        position = self.prob.dt * self.coll.Q @ X
         # velocity=self.prob.dt*(self.coll.Q@V)
         # position=self.prob.dt*(self.coll.Q@X)
         
@@ -183,9 +183,14 @@ class sdc_class(object):
     def max_norm_residual(self, residual):
         return np.max(np.abs(residual))
 
-    def get_collocation_fsolve(self):
-        X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
-        V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
+    def get_collocation_fsolve(self, tau_x=None, tau_v=None):
+        if tau_x is not None:
+            X0=tau_x
+            V0=tau_v
+        else:
+            breakpoint()
+            X0 = self.prob.u0[0] * np.ones(self.coll.num_nodes + 1)
+            V0 = self.prob.u0[1] * np.ones(self.coll.num_nodes + 1)
         U0 = np.concatenate([X0, V0])
         U = fsolve(self.get_collocation_problem, U0)
         X, V = np.split(U, 2)

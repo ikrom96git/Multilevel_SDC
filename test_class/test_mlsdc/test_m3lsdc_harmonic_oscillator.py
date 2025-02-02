@@ -80,9 +80,9 @@ def duffing_sdc():
 
 
 def duffing_m3lsdc_Asyptotic(order=1):
-    problem_HarmonicOscillator_params=get_harmonic_oscillator_params(EPSILON)
-    problem_HarmonicOscillator_zeros_params=get_harmonic_oscillator_zeros_order_params(EPSILON)
-    problem_HarmonicOscillator_first_params = get_harmonic_oscillator_first_order_params(EPSILON)
+    problem_HarmonicOscillator_params, *_=get_harmonic_oscillator_params(EPSILON)
+    problem_HarmonicOscillator_zeros_params, *_=get_harmonic_oscillator_zeros_order_params(EPSILON)
+    problem_HarmonicOscillator_first_params, *_ = get_harmonic_oscillator_first_order_params(EPSILON)
     if order==1:
         problem_class_reduced = [
             HarmonicOscillator,
@@ -119,9 +119,9 @@ def duffing_m3lsdc_Asyptotic(order=1):
 def test_residual():
     residual_mlsdc, *_=duffing_mlsdc()
     # residual_m3lsdc_standart, *_=duffing_m3lsdc_standart()
-    # residual_m3lsdc_asyp, *_=duffing_m3lsdc_Asyptotic()
+    residual_m3lsdc_asyp, *_=duffing_m3lsdc_Asyptotic()
     # breakpoint()
-    # residual_m3lsdc_asyp_zero, *_=duffing_m3lsdc_Asyptotic(order=0)
+    residual_m3lsdc_asyp_zero, *_=duffing_m3lsdc_Asyptotic(order=0)
     residual_sdc=duffing_sdc()
     # breakpoint()
     nodes=collocation_params['num_nodes']
@@ -130,15 +130,15 @@ def test_residual():
     label_set = [
         'SDC',
         "MLSDC ",
-        "M3LSDC standart",
+        # "M3LSDC standart",
         r"M3LSDC averaging $\mathcal{O}(\varepsilon^{0})$",
         r"M3LSDC averaging $\mathcal{O}(\varepsilon^{1})$"
     ]
-    breakpoint()
+    # breakpoint()
     residual_set = [
         np.array(residual_sdc)[:,0],
         np.array(residual_mlsdc)[:, 0],
-        np.array(residual_m3lsdc_standart)[:, 0],
+        # np.array(residual_m3lsdc_standart)[:, 0],
         np.array(residual_m3lsdc_asyp_zero)[:,0],
         np.array(residual_m3lsdc_asyp)[:, 0]
        
