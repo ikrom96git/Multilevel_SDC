@@ -18,7 +18,7 @@ def plot_solution(time, solution, title, label_set):
     plt.xlabel("Time")
     plt.ylabel("$x(t, \\varepsilon)$")
     plt.legend()
-    # plt.title(title)
+    plt.title(title)
     plt.xlim(left=0)
     plt.xlim(right=2*np.pi)
     plt.tight_layout()

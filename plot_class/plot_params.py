@@ -13,5 +13,5 @@ _plt.rcParams['axes.labelpad'] = 6
 # _plt.rcParams['markers.fillstyle'] = 'none'
 _plt.rcParams['lines.markersize'] = 15.0
 _plt.rcParams['lines.markeredgewidth'] = 1.5
-# _plt.rcParams['mathtext.fontset'] = 'cm'
-# _plt.rcParams['mathtext.rm'] = 'serif'
+_plt.rcParams['mathtext.fontset'] = 'cm'
+_plt.rcParams['mathtext.rm'] = 'serif'
