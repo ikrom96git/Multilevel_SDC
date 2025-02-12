@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from problem_class.Nonuniform_electric_field import Nonuniform_electric_field
 from scipy.integrate import solve_ivp
-
+from test_class.test_problem_class.test_nonuniform import nonuniform_electric_field
 
 def prob_params():
     prob_params=dict()
     prob_params['u0']=np.array([[1,1,1],[1,1,1]])
     prob_params['c']=2
-    prob_params['epsilon']=0.0001
+    prob_params['epsilon']=1e-5
     return prob_params
 
 def Error(G, X):
@@ -50,6 +50,27 @@ def plot_solution(time):
     plt.tight_layout()
     plt.show()
         
+def test_solution():
+    param=prob_params()
+    problem_class=Nonuniform_electric_field(param)
+    time=np.linspace(0, 10, 1000)
+    exact_solution=problem_class.n_time_exact_solution(problem_class.prob.u0[0], problem_class.prob.u0[1], time)
+    asymp_solution=problem_class.n_time_asymptotic_solution(problem_class.prob.u0[0], problem_class.prob.u0[1], time)
+    odeint=nonuniform_electric_field()
+    for ii in range(6):
+        plt.plot(time, exact_solution[ii], label=f'exact solution {ii}')
+        plt.plot(time, asymp_solution[ii], label=f'asymptotic solution {ii}')
+        # plt.plot(time, odeint.y[ii], label=f'odeint {ii}')
+        plt.legend()
+        plt.show()
+    # plt.plot(time, exact_solution[1], label='exact solution')
+    # plt.plot(time, asymp_solution[1], label='asymptotic solution')
+    # plt.legend()
+    # plt.tight_layout()
+    # plt.show()
+
+
+
 
 def plot_Error(Data_error, time):
     plt.semilogy(time, Data_error)
@@ -92,7 +113,8 @@ if __name__=="__main__":
     Error_data=get_Error(time)
     # plot_Error(Error_data, time)
     # plot_solution(time)
-    get_odeint(time, eps=0.01)
+    # get_odeint(time, eps=0.01)
+    test_solution()
 
 
 

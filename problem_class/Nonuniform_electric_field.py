@@ -64,7 +64,7 @@ class Nonuniform_electric_field():
         b=np.concatenate((x_0, v_0))
         const=np.linalg.solve(A_0, b)
         # print(const)
-        breakpoint()
+        # breakpoint()
         return A@const
     
     def E_field(self, x):
@@ -81,6 +81,18 @@ class Nonuniform_electric_field():
         A=np.concatenate((y0, self.R_matrix(theta)@u0))
         B=np.concatenate((y1+self.R_bar_matrix(theta)@u0, self.R_matrix(theta)@u1+self.R_bar_matrix(theta)@self.E_field(y0)))
         return A+self.prob.epsilon*B
+    
+    def n_time_exact_solution(self, x_0, v_0, time, s=0):
+        solution=np.zeros([6, len(time)])
+        for tt in range(len(time)):
+            solution[:, tt]=self.exact_solution(x_0, v_0, time[tt], s)
+        return solution
+    
+    def n_time_asymptotic_solution(self, x_0, v_0, time, s=0):
+        solution=np.zeros([6, len(time)])
+        for tt in range(len(time)):
+            solution[:, tt]=self.asymp_solution(x_0, v_0, time[tt], s)
+        return solution
     
         
 

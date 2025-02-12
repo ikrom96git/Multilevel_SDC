@@ -3,11 +3,60 @@ from problem_class.Magnetic_field import Magnetic_field
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from copy import deepcopy
+from plot_class import plot_params
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 EPSILON=0.01
 t_end=5
 dt=(2*np.pi*EPSILON)/80
-def ode_solver():
+
+def A_matrix(y):
+    y1, y2 = y[0], y[1]
+    factor = 1 / (y1**2 + y2**2)
+    return np.array([
+        [y2**2, -y1 * y2, 0],
+        [-y1 * y2, y1**2, 0],
+        [0, 0, 0]
+    ]) * factor
+
+def beta_vector(y, u):
+    y1, y2 = y[0], y[1]
+    u1, u2 = u[0], u[1]
+    factor = 1 / (y1**2 + y2**2)
+    return np.array([
+        u2 * (u1 * y2 - u2 * y1) * factor,
+        u1 * (u2 * y1 - u1 * y2) * factor,
+        0
+    ])
+
+def system(t, state):
+    y = state[:3]  # First 3 elements are y(t)
+    u = state[3:]  # Last 3 elements are u(t)
+    dy_dt = A_matrix(y) @ u
+    du_dt = beta_vector(y, u)
+    return np.concatenate((dy_dt, du_dt))
+
+def runge_kutta_4(f, y0, t0, t_end, dt):
+    t = t0
+    state = y0
+    solution = [state]
+    time_points = [t]
+
+    while t < t_end:
+        k1 = f(t, state)
+        k2 = f(t + dt / 2, state + dt / 2 * k1)
+        k3 = f(t + dt / 2, state + dt / 2 * k2)
+        k4 = f(t + dt, state + dt * k3)
+        state = state + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+        t += dt
+
+        solution.append(state)
+        time_points.append(t)
+
+    return np.array(solution)
+
+
+
+def ode_solver(xx0):
     import numpy as np
     from scipy.integrate import solve_ivp
     import matplotlib.pyplot as plt
@@ -31,48 +80,107 @@ def ode_solver():
         return np.concatenate((dxdt, dvdt))
 
     # Set initial conditions
-    x0 = np.array([0, 1, 1])
+    x0 = np.array([xx0, 1, 1])
     v0 = np.array([1, 1e-2, 0])  # Assuming eps = 0.01 for this example
     y0 = np.concatenate((x0, v0))
-
+    params={'t0':0, 't_end':5, 'dt':0.01}
+    magnetic=Magnetic_field(params)
+    C_matrix=magnetic.C_matrix
     # Time span
-    t_span = (0, 5)
-    t_eval = np.linspace(*t_span, 100000)
-
+    t_span = (0, 2000)
+    dt=0.1
+    t_eval=np.arange(*t_span,dt)
     # Solve the ODE system
-    eps = 0.01  # Define epsilon
-    sol = solve_ivp(ode_system, t_span, y0, args=(eps,), t_eval=t_eval, method='RK45')
-    ax=plt.figure().add_subplot(projection='3d')
-    ax.set_xlabel('X(t)')
-    ax.set_ylabel('Y(t)')
-    ax.set_zlabel('Z(t)')
-    ax.grid(False)
-    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-    ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-    ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
-    ax.set_xlim(-1.5, 1.5)
-    ax.set_ylim(-1.5, 1.5)
-    # ax.set_zlim(0.8, 1.1)
-    x = ax.get_xticks()
-    y = ax.get_yticks()
-    x, y = np.meshgrid(x, y)
-    z = np.zeros_like(x)
-    # ax.plot_wireframe(x, y,z, color='black', alpha=0.15)
-    ax.plot(sol.y[0, :], sol.y[1,:], sol.y[2,:], label='curve')
+    EPSILON = [0.1, 0.01, 0.001, 0.0001]  # Define epsilon
+    G=np.zeros((6, len(t_eval)))
+    error=np.zeros((len(EPSILON), len(t_eval)))
+    for ee, eps in enumerate(EPSILON):
+    # eps = 0.01  # Define epsilon
+        theta=(t_eval-0)/eps
+        sol = solve_ivp(ode_system, t_span, y0, args=(eps,), t_eval=t_eval, method='RK45')
+        asymptotic_solution=runge_kutta_4(system, y0, t_span[0], t_span[1], dt)
+        y, u=np.split(asymptotic_solution, 2, axis=1)
+        for ii in range(len(t_eval)):
+            theta=(t_eval[ii]-0)/eps
+            C=C_matrix(theta, y[ii, :])
+            # breakpoint()
+            G[3:, ii]=C@u[ii,:]
+            G[:3, ii]=y[ ii, :]
+
+        
+    # compute relative error with l1 norm
+        
+        for jj in range(len(sol.t)):
+            error[ee, jj]=np.linalg.norm(G[:,jj]-sol.y[:,jj], ord=1)/np.linalg.norm(sol.y[:,jj], ord=1)
+        
+    # plot the error vs time
     
-    ax.legend()
+    [plt.plot(sol.t, error[ii], label=f'$\epsilon={eps}$') for ii, eps in enumerate(EPSILON)]
+    plt.legend()
+    plt.ylabel('Relative Error')
+    plt.xlabel('Time')
+    plt.grid()
+    plt.xlim(0, 2400)
+    plt.ylim(0, 1.2)
+    # plt.yscale('log')
     plt.tight_layout()
     plt.show()
-    # Plot the solution
-    plt.figure(figsize=(10, 5))
-    plt.plot(sol.t, sol.y[0], label=r'$x_1$')
-    plt.plot(sol.t, sol.y[1], label=r'$x_2$')
-    plt.plot(sol.t, sol.y[2], label=r'$x_3$')
-    plt.xlabel('Time')
-    plt.ylabel('Position Components')
-    plt.legend()
-    plt.grid()
+    
+    # ax=plt.figure().add_subplot(projection='3d')
+    
+    # ax.grid(False)
+    # ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    # ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    # ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    
+    # ax.set_zlim(0.8, 1.1)
+    # x = ax.get_xticks()
+    # y = ax.get_yticks()
+    # x, y = np.meshgrid(x, y)
+    # z = np.zeros_like(x)
+    # ax.plot_wireframe(x, y,z, color='black', alpha=0.15)
+    # ax.plot(sol.y[0, :], sol.y[1,:], sol.y[2,:], color='blue')
+    # ax.set_xlim(-1.5, 1.5)
+    # ax.set_ylim(-1.5, 1.5)
+    # z=ax.get_zticks()
+    # ax.set_zlim(np.min(z)-0.0000001, np.max(z)+0.00001)
+    # ax.set_xlabel('$X(t)$', linespacing=3.2)
+    # ax.set_ylabel('$Y(t)$', linespacing=3.2)
+    # ax.set_zlabel('$Z(t)$', linespacing=5.2)
+
+    # # z axis in log scale
+    # # ax.set_zscale('log')
+    # ax.legend()
+    # plt.tight_layout()
+    # plt.savefig('magnetic_field.pdf')
     # plt.show()
+    # # Plot the solution
+    # plt.figure(figsize=(10, 5))
+    # plt.plot(sol.t, sol.y[0], label=r'$x_1$')
+    # plt.plot(sol.t, sol.y[1], label=r'$x_2$')
+    # plt.plot(sol.t, sol.y[2], label=r'$x_3$')
+    # plt.xlabel('Time')
+    # plt.ylabel('Position Components')
+    # plt.legend()
+    # plt.grid()
+    # plt.show()
+    return sol
+
+def plot_solution_projection():
+    sol0=ode_solver(0)
+    sol1=ode_solver(1)
+    plt.plot(sol0.y[0], sol0.y[1], label='initial condition in $(5.87)$', color='blue')
+    plt.plot(sol1.y[0], sol1.y[1], label='initial condition in $(5.88)$', color='purple')
+    plt.legend(loc='upper left')
+    plt.grid()
+    plt.xlim(-1.5, 1.5)
+    plt.ylim(-1.5, 1.5)
+    plt.xlabel('$X(t)$')
+    plt.ylabel('$Y(t)$')
+    plt.tight_layout()
+    plt.savefig('magnetic_field_projection.pdf')
+    plt.show()
+
 
 
 def Error(G, X):
@@ -333,8 +441,9 @@ if __name__=="__main__":
     # solution_asyp()
     # sol=test_RK45()
     # plot_solution(sol)
-    ode_solver()
+    ode_solver(0)
     # get_error()
     # breakpoint()
     # plot_values()
-
+    # plot_solution_projection()
+# 

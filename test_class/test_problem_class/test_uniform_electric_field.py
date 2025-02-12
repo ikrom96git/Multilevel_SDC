@@ -1,6 +1,7 @@
 import numpy as np
 from plot_class.plot_solutionvstime import plot_solution
 from problem_class.Uniform_electric_field import Uniform_electric_field
+from plot_class import plot_params
 import matplotlib.pyplot as plt
 def uniform_electric_filed_params():
     problem_params = {
@@ -42,9 +43,9 @@ def test_solution_line_plot():
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(exact_solution[:,0], exact_solution[:,1], exact_solution[:,2])
     # ax.plot(asymptotic_solution[:,0], asymptotic_solution[:,1], asymptotic_solution[:,2], label='Asymptotic solution')
-    ax.set_xlabel('$X$')
-    ax.set_ylabel('$Y$')
-    ax.set_zlabel('$Z$')
+    ax.set_xlabel('$X(t)$')
+    ax.set_ylabel('$Y(t)$')
+    ax.set_zlabel('$Z(t)$')
     # ax.set_title(rf'$\varepsilon={epsilon},$' +r'$\ t_{\mathrm{end}}=2\pi$')
     ax.legend()
     plt.tight_layout()
@@ -90,5 +91,5 @@ def relative_error_plot():
 
 if __name__ == "__main__":
     # test_uniform_electric_field_solution()
-    # test_solution_line_plot()
-    relative_error_plot()
+    test_solution_line_plot()
+    # relative_error_plot()
