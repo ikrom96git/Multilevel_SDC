@@ -25,7 +25,7 @@ from sweeper_class.sdc_class import sdc_class
 from scipy.integrate import solve_ivp
 
 
-EPSILON = 0.9
+EPSILON = 0.01
 problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
 
 
