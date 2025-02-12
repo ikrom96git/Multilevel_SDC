@@ -150,7 +150,7 @@ def test_duffing_residual():
 
 
 def test_duffing_equation_solution():
-    EPSILON = 0.1
+    EPSILON = 0.01
     
     problem_params, collocation_params, sweeper_params, *_ = get_mlsdc_default_params()
     problem_duffing_params = get_duffing_equation_params(EPSILON)
@@ -209,7 +209,7 @@ def test_duffing_equation_solution():
     duffing_solution = [sol[0, :], duffing_zeros_order_solution[0, :], duffing_pos]
     # Time = np.append(0.0, model_mlsdc.sdc_fine_model.coll.nodes)
     Title = rf"$\varepsilon={EPSILON}$"
-    label_set = ["RK45", r"$x^{(0)}$", r"$x^{(0)}+\varepsilon x^{(1)}$"]
+    label_set = ["RK-$45$", r"$x^{(0)}$", r"$x^{(0)}+\varepsilon x^{(1)}$"]
 
 
     # solution_set = [mlsdc_pos, mlsdc_reduced_pos]

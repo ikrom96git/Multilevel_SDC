@@ -64,7 +64,7 @@ class Nonuniform_electric_field():
         b=np.concatenate((x_0, v_0))
         const=np.linalg.solve(A_0, b)
         # print(const)
-        # breakpoint()
+        breakpoint()
         return A@const
     
     def E_field(self, x):

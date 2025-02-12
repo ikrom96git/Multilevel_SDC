@@ -4,6 +4,7 @@ from core.Pars import _Pars
 class Uniform_electric_field:
     def __init__(self, problem_params):
         self.params=_Pars(problem_params)
+        self.P=self.P_matrix()
 
     def P_matrix(self):
         P=np.zeros((3, 3))
@@ -31,6 +32,7 @@ class Uniform_electric_field:
         I=np.eye(3)
         O=np.zeros((3,3))
         theta=(t-s)/epsilon
+        
         A=np.block([[I, (t-s)*self.P+epsilon*self.R_bar_matrix(theta)],[O, self.R_matrix(theta)]])
         return A
     
@@ -57,6 +59,20 @@ class Uniform_electric_field:
         C=self.C_matrix(t, epsilon, s)
         u_0=np.concatenate((x_0, v_0))
         return A@u_0+C
+    
+    def n_time_exact_solution(self, x_0, v_0, t, epsilon, s=0):
+        n=len(t)
+        u=np.zeros((n, 6))
+        for i in range(n):
+            u[i]=self.exact_solution(x_0, v_0, t[i], epsilon, s)
+        return u
+    
+    def n_time_asymptotic_solution(self, x_0, v_0, t, epsilon, s=0):
+        n=len(t)
+        u=np.zeros((n, 6))
+        for i in range(n):
+            u[i]=self.Asymptotic_solution(x_0, v_0, t[i], epsilon, s)
+        return u
     
 
 

@@ -21,6 +21,8 @@ def plot_solution(time, solution, title, label_set):
     # plt.title(title)
     plt.xlim(left=0)
     plt.xlim(right=2*np.pi)
+    plt.ylim(bottom=-2.8)
+    plt.ylim(top=2.8)
     plt.tight_layout()
     plt.grid()
 
