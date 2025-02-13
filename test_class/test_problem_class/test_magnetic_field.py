@@ -5,6 +5,7 @@ from scipy.integrate import solve_ivp
 from copy import deepcopy
 from plot_class import plot_params
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 EPSILON=0.01
 t_end=5
 dt=(2*np.pi*EPSILON)/80
@@ -87,11 +88,11 @@ def ode_solver(xx0):
     magnetic=Magnetic_field(params)
     C_matrix=magnetic.C_matrix
     # Time span
-    t_span = (0, 2000)
-    dt=0.1
+    t_span = (0, 2500)
+    dt=0.625
     t_eval=np.arange(*t_span,dt)
     # Solve the ODE system
-    EPSILON = [0.1, 0.01, 0.001, 0.0001]  # Define epsilon
+    EPSILON = [0.1, 0.05, 0.01, 0.005]  # Define epsilon
     G=np.zeros((6, len(t_eval)))
     error=np.zeros((len(EPSILON), len(t_eval)))
     for ee, eps in enumerate(EPSILON):
@@ -114,16 +115,26 @@ def ode_solver(xx0):
             error[ee, jj]=np.linalg.norm(G[:,jj]-sol.y[:,jj], ord=1)/np.linalg.norm(sol.y[:,jj], ord=1)
         
     # plot the error vs time
+    colors=['black', 'green', 'blue', 'red']
+    fig, ax = plt.subplots()
+    [ax.semilogy(sol.t, error[ii], label=rf'$\varepsilon={eps}$', color=colors[ii]) for ii, eps in enumerate(EPSILON)]
     
-    [plt.plot(sol.t, error[ii], label=f'$\epsilon={eps}$') for ii, eps in enumerate(EPSILON)]
-    plt.legend()
-    plt.ylabel('Relative Error')
-    plt.xlabel('Time')
-    plt.grid()
-    plt.xlim(0, 2400)
-    plt.ylim(0, 1.2)
-    # plt.yscale('log')
+    ax.set_ylabel('Relative Error')
+    ax.set_xlabel('Time')
+    ax.grid()
+    ax.set_xlim(t_span[0],t_span[1])
+    ax_inset=inset_axes(ax, width='60%', height='55%', loc='center right')
+    [ax_inset.semilogy(sol.t[:300], error[ii][:300], label=rf'$\varepsilon={eps}$', color=colors[ii]) for ii, eps in enumerate(EPSILON)]
+    ax_inset.tick_params(labelsize=8)
+    ax_inset.legend(fontsize=10, loc='lower right')
+    ax_inset.grid()
+    ax_inset.set_xlim(0, sol.t[300])
+    # plt.ylim(0, 1.2)
+    # ax.yscale('log')
+    ax.set_ylim(1e-3, 2)
     plt.tight_layout()
+    ax.legend(loc='lower left')
+    plt.savefig('magnetic_field_error.pdf')
     plt.show()
     
     # ax=plt.figure().add_subplot(projection='3d')
@@ -169,6 +180,7 @@ def ode_solver(xx0):
 def plot_solution_projection():
     sol0=ode_solver(0)
     sol1=ode_solver(1)
+    
     plt.plot(sol0.y[0], sol0.y[1], label='initial condition in $(5.87)$', color='blue')
     plt.plot(sol1.y[0], sol1.y[1], label='initial condition in $(5.88)$', color='purple')
     plt.legend(loc='upper left')
