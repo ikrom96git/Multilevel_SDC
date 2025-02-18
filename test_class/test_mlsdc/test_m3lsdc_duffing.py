@@ -137,8 +137,8 @@ def test_residual():
         'SDC',
         "MLSDC ",
         # "M3LSDC standart",
-        r"M3LSDC averaging $\mathcal{O}(\varepsilon^{0})$",
-        r"M3LSDC averaging $\mathcal{O}(\varepsilon^{1})$"
+        r"M3LSDC Avg. $\mathcal{O}(\varepsilon^{0})$",
+        r"M3LSDC Avg. $\mathcal{O}(\varepsilon^{1})$"
     ]
     residual_set = [
         np.array(residual_sdc)[:,0],

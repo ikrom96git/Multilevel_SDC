@@ -28,6 +28,8 @@ class Uniform_electric_field:
         R_bar[2,2]=np.sin(theta)
         return R_bar
     
+
+
     def A_matrix(self, t, epsilon,s=0):
         I=np.eye(3)
         O=np.zeros((3,3))

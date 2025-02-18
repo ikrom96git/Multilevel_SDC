@@ -89,7 +89,7 @@ def ode_solver(xx0):
     C_matrix=magnetic.C_matrix
     # Time span
     t_span = (0, 2500)
-    dt=0.625
+    dt=0.615
     t_eval=np.arange(*t_span,dt)
     # Solve the ODE system
     EPSILON = [0.1, 0.05, 0.01, 0.005]  # Define epsilon
@@ -123,9 +123,9 @@ def ode_solver(xx0):
     ax.set_xlabel('Time')
     ax.grid()
     ax.set_xlim(t_span[0],t_span[1])
-    ax_inset=inset_axes(ax, width='60%', height='55%', loc='center right')
-    [ax_inset.semilogy(sol.t[:300], error[ii][:300], color=colors[ii]) for ii, eps in enumerate(EPSILON)]
-    EPSILON.reverse()
+
+    ax_inset=inset_axes(ax, width='60%', height='50%', loc='center right')
+    [ax_inset.semilogy(sol.t[:300], error[ii][:300], label=rf'$\varepsilon={eps}$', color=colors[ii]) for ii, eps in enumerate(EPSILON)]
     ax_inset.tick_params(labelsize=8)
     ax_inset.legend(EPSILON, fontsize=10, loc='lower right')
     ax_inset.grid()
