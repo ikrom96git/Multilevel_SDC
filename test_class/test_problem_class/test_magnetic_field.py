@@ -113,27 +113,28 @@ def ode_solver(xx0):
         
         for jj in range(len(sol.t)):
             error[ee, jj]=np.linalg.norm(G[:,jj]-sol.y[:,jj], ord=1)/np.linalg.norm(sol.y[:,jj], ord=1)
-        
+    
     # plot the error vs time
     colors=['black', 'green', 'blue', 'red']
     fig, ax = plt.subplots()
-    [ax.semilogy(sol.t, error[ii], label=rf'$\varepsilon={eps}$', color=colors[ii]) for ii, eps in enumerate(EPSILON)]
+    [ax.semilogy(sol.t, error[ii],  color=colors[ii]) for ii, eps in enumerate(EPSILON)]
     
     ax.set_ylabel('Relative Error')
     ax.set_xlabel('Time')
     ax.grid()
     ax.set_xlim(t_span[0],t_span[1])
     ax_inset=inset_axes(ax, width='60%', height='55%', loc='center right')
-    [ax_inset.semilogy(sol.t[:300], error[ii][:300], label=rf'$\varepsilon={eps}$', color=colors[ii]) for ii, eps in enumerate(EPSILON)]
+    [ax_inset.semilogy(sol.t[:300], error[ii][:300], color=colors[ii]) for ii, eps in enumerate(EPSILON)]
+    EPSILON.reverse()
     ax_inset.tick_params(labelsize=8)
-    ax_inset.legend(fontsize=10, loc='lower right')
+    ax_inset.legend(EPSILON, fontsize=10, loc='lower right')
     ax_inset.grid()
     ax_inset.set_xlim(0, sol.t[300])
     # plt.ylim(0, 1.2)
     # ax.yscale('log')
     ax.set_ylim(1e-3, 2)
     plt.tight_layout()
-    ax.legend(loc='lower left')
+    ax.legend(EPSILON, loc='lower left')
     plt.savefig('magnetic_field_error.pdf')
     plt.show()
     
@@ -453,7 +454,7 @@ if __name__=="__main__":
     # solution_asyp()
     # sol=test_RK45()
     # plot_solution(sol)
-    ode_solver(0)
+    ode_solver(1)
     # get_error()
     # breakpoint()
     # plot_values()

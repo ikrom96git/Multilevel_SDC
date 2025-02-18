@@ -45,7 +45,7 @@ def duffing_mlsdc():
     )
     mlsdc_pos, mlsdc_vel=model_mlsdc.get_mlsdc_iter_solution()
     residual_mlsdc=model_mlsdc.sdc_fine_model.get_residual
-    nodes=model_mlsdc.sdc_fine_model.coll.nodes
+    nodes=model_mlsdc.sdc_fine_model.coll.nodes*model_mlsdc.sdc_fine_model.prob.dt
     
     return residual_mlsdc, mlsdc_pos, nodes
 
@@ -80,9 +80,9 @@ def duffing_sdc():
     collocation_sdc=deepcopy(collocation_params)
     collocation_sdc['num_nodes']=5
     model=sdc_class(problem_param, collocation_sdc, sweeper_params, DuffingEquation)
-    model.sdc_iter()
+    pos, vel=model.sdc_iter()
     # breakpoint()
-    return model.get_residual
+    return model.get_residual, pos
 
 
 def duffing_m3lsdc_Asyptotic(order=1):
@@ -151,6 +151,67 @@ def test_residual():
     filename=f'residual_duffing{EPSILON}.pdf'
     plot_residual(Kiter, residual_set, Title, label_set, filename)
 
+# Define the system of ODEs
+def duffing_deriv(t, y, epsilon):
+    x, v = y  # v = dx/dt
+    dxdt = v
+    dvdt = -x - epsilon * x**3  # Duffing equation
+    return [dxdt, dvdt]
+def duffing_solution(t_eval):
+    # Parameters
+    epsilon = EPSILON  # Nonlinearity parameter
+    x0 = 2  # Initial displacement
+    v0 = 0  # Initial velocity
+    y0 = [x0, v0]  # Initial condition
+
+    # Time span
+    # t_span = (0, 20)  # From t=0 to t=20
+    # t_eval = np.linspace(0, 20, 1000)  # High-resolution output times
+    t_span=(np.min(t_eval), np.max(t_eval))
+    # Solve the ODE with high precision using RK45 (or DOP853 for even higher order)
+    sol = solve_ivp(
+        duffing_deriv, t_span, y0, args=(epsilon,), method="DOP853",
+        t_eval=t_eval, rtol=1e-16, atol=1e-16  # High precision tolerances
+    )
+
+    # Extract solutions
+    t = sol.t
+    x = sol.y[0]
+    v = sol.y[1]
+    return x
+
+
+def test_convergence():
+    import matplotlib.pyplot as plt
+    # Get computed solutions
+    _, mlsdc_pos, nodes = duffing_mlsdc()
+    residual_m3lsdc_asyp, m3lsdc_asym1_pos, *_ = duffing_m3lsdc_Asyptotic()
+    residual_m3lsdc_asyp_zero, m3lsdc_asym0_pos, *_ = duffing_m3lsdc_Asyptotic(order=0)
+    residual_sdc, sdc_pos = duffing_sdc()
+    exact_solution_pos = duffing_solution(nodes)
+
+    # Compute absolute errors
+    error_mlsdc = np.abs(mlsdc_pos[1:] - exact_solution_pos)
+    error_m3lsdc_asym1 = np.abs(m3lsdc_asym1_pos[1:] - exact_solution_pos)
+    error_m3lsdc_asym0 = np.abs(m3lsdc_asym0_pos[1:] - exact_solution_pos)
+    error_sdc = np.abs(sdc_pos[1:] - exact_solution_pos)
+
+    # Plot absolute errors
+    plt.figure(figsize=(10, 6))
+    plt.plot(nodes, error_mlsdc, label="MLSDC Error", linestyle="solid")
+    plt.plot(nodes, error_m3lsdc_asym1, label="M3LSDC (Asymptotic, order=1) Error", linestyle="dashed")
+    plt.plot(nodes, error_m3lsdc_asym0, label="M3LSDC (Asymptotic, order=0) Error", linestyle="dotted")
+    plt.plot(nodes, error_sdc, label="SDC Error", linestyle="dashdot")
+
+    plt.yscale("log")  # Log scale for better visualization
+    plt.xlabel("Time")
+    plt.ylabel("Absolute Error")
+    plt.title("Absolute Error Comparison of Duffing Equation Solvers")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
 def test_solution():
     *_, mlsdc_pos, nodes =duffing_mlsdc()
     *_, m3lsdc_pos=duffing_m3lsdc_standart()
@@ -164,5 +225,6 @@ def test_solution():
     plot_solution(nodes, solution_set, Title, label_set) 
 
 if __name__=='__main__':
-    test_residual()
+    # test_residual()
     # test_solution()
+    test_convergence()
